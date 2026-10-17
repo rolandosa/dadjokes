@@ -43,9 +43,10 @@ function gaugeSvg() {
   </svg>`;
 }
 
-function confetti(emojis, count = 40) {
+// The layer goes inside the page root so it still shows when the root is fullscreen.
+function confetti(host, emojis, count = 40) {
   const layer = el('div', { class: 'djg-confetti' });
-  document.body.appendChild(layer);
+  host.appendChild(layer);
   const w = window.innerWidth;
   const h = window.innerHeight;
   for (let i = 0; i < count; i++) {
@@ -112,6 +113,34 @@ export default definePage(({ element }) => {
   const statTold = el('b', { text: '–' });
   const statRated = el('b', { text: '–' });
   const statAvg = el('b', { text: '–' });
+  // Fullscreen: use the browser's fullscreen when Vault allows it, else fill the window.
+  const isFull = () => document.fullscreenElement === root || root.classList.contains('is-maximized');
+  const syncFullscreenBtn = () => {
+    fullscreenBtn.textContent = isFull() ? '✕ Exit fullscreen' : '⛶ Fullscreen';
+    fullscreenBtn.setAttribute('aria-pressed', String(isFull()));
+  };
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement === root) await document.exitFullscreen();
+    else if (root.classList.contains('is-maximized')) root.classList.remove('is-maximized');
+    else {
+      try {
+        await root.requestFullscreen();
+      } catch {
+        root.classList.add('is-maximized');
+      }
+    }
+    syncFullscreenBtn();
+  };
+  const fullscreenBtn = el('button', { class: 'djg-fullscreen', type: 'button', onclick: toggleFullscreen });
+  syncFullscreenBtn();
+  document.addEventListener('fullscreenchange', syncFullscreenBtn);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && root.classList.contains('is-maximized')) {
+      root.classList.remove('is-maximized');
+      syncFullscreenBtn();
+    }
+  });
+
   const bulbs = el('div', { class: 'djg-bulbs' });
   for (let i = 0; i < 40; i++) bulbs.appendChild(el('i'));
   wrap.appendChild(
@@ -119,6 +148,7 @@ export default definePage(({ element }) => {
       'header',
       { class: 'djg-marquee' },
       bulbs,
+      fullscreenBtn,
       el('h1', { class: 'djg-title', text: 'DAD-O-MATIC 3000' }),
       el('p', { class: 'djg-sub', text: 'Industrial-grade puns. Rated by the Groan-o-Meter™.' }),
       el(
@@ -302,7 +332,7 @@ export default definePage(({ element }) => {
     punch.classList.add('show');
     badum.classList.add('show');
     root.classList.add('is-punchline');
-    confetti(['😂', '🥁', '👔', '🤣', '💥', '🧔']);
+    confetti(root, ['😂', '🥁', '👔', '🤣', '💥', '🧔']);
     verdict.textContent = 'How bad was it? Be honest. Dad can take it.';
 
     levelButtons.forEach((b) => (b.disabled = false));
@@ -323,7 +353,7 @@ export default definePage(({ element }) => {
     verdict.classList.remove('pop');
     void verdict.offsetWidth;
     verdict.classList.add('pop');
-    if (level.score >= 4) confetti([level.emoji, '🏆', '⭐', '👏'], 30);
+    if (level.score >= 4) confetti(root, [level.emoji, '🏆', '⭐', '👏'], 30);
     try {
       const id = joke.id ?? (await joke.saving);
       if (!id) return;

@@ -19,6 +19,7 @@ A Veeva Vault **Custom Page** that generates dad jokes, stores every joke it tel
   | 5 | 🚪 Left the Room | The highest honour a dad can receive. |
 
   The gauge needle swings and you earn Dad Points.
+- **Fullscreen.** The ⛶ button in the header takes the page fullscreen (or fills the browser window if Vault blocks fullscreen). Esc exits.
 - **Hall of Groans** shows the top-rated jokes; **Fresh Off the Grill** shows the latest ones. The header tracks jokes told, jokes judged and the average groan.
 
 ## How it's built
