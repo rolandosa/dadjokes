@@ -10,7 +10,8 @@ async function call(path, init = {}) {
     headers: { ...HEADERS, ...(init.headers || {}) },
   });
   const body = await res.json();
-  if (body.responseStatus !== 'SUCCESS') {
+  // WARNING still carries data (e.g. Vault flags repeated identical queries), so only FAILURE is an error.
+  if (!res.ok || body.responseStatus === 'FAILURE') {
     const msg = body.errors?.map((e) => e.message).join('; ') || res.statusText;
     throw new Error(msg);
   }

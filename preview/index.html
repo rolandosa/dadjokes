@@ -14,12 +14,16 @@
     const rows = [];
     let seq = 0;
     const json = (body) => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+    const seen = new Set();
     function runQuery(q) {
+      // Like Vault, flag a repeated identical query with a WARNING (the data still comes back).
+      const status = seen.has(q) ? 'WARNING' : 'SUCCESS';
+      seen.add(q);
       let data = rows.slice();
       if (/groan_score__c >= 1/.test(q)) data = data.filter((r) => r.groan_score__c >= 1).sort((a, b) => b.groan_score__c - a.groan_score__c || b.seq - a.seq);
       else if (/ORDER BY created_date__v DESC/.test(q)) data.sort((a, b) => b.seq - a.seq);
       const size = Number((q.match(/PAGESIZE (\d+)/) || [])[1] || 1000);
-      return { responseStatus: 'SUCCESS', responseDetails: { total: data.length }, data: data.slice(0, size) };
+      return { responseStatus: status, responseDetails: { total: data.length }, data: data.slice(0, size) };
     }
     window.__vaultMeta = {};
     window.__vaultModuleV5 = {
