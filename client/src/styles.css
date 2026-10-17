@@ -72,31 +72,22 @@
   box-shadow: 0 8px 0 var(--ink);
 }
 
-.djg-theatre { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; min-height: 320px; position: relative; }
+.djg-theatre { display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: center; min-height: 320px; position: relative; }
 @media (max-width: 560px) { .djg-theatre { grid-template-columns: 1fr; justify-items: center; } }
 
-.dad { width: 200px; height: auto; overflow: visible; }
-.dad-head { transform-origin: 110px 185px; animation: djg-bob 2.4s ease-in-out infinite; }
-@keyframes djg-bob { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-3px); } }
-.dad-eye { transform-box: fill-box; transform-origin: center; animation: djg-blink-eye 5s infinite; }
-@keyframes djg-blink-eye { 0%, 95%, 100% { transform: scaleY(1); } 97.5% { transform: scaleY(.1); } }
-/* Mouth: smirk at rest, flaps open while Dad talks, big grin with crinkled eyes on the punchline. */
-.dad-mouth-open, .dad-mouth-grin { opacity: 0; }
-.dad-crinkle { opacity: .5; transition: opacity .2s; }
-.djg.is-thinking .dad-mouth-open { animation: djg-flap .28s steps(1) infinite; }
-.djg.is-thinking .dad-mouth-smile { animation: djg-flap .28s steps(1) infinite reverse; }
+.dad { position: relative; width: 240px; aspect-ratio: 600 / 712; transform-origin: 50% 100%; animation: djg-bob 2.4s ease-in-out infinite; }
+.dad img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; }
+@keyframes djg-bob { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg) translateY(-3px); } }
+/* Frames stacked over the resting pose: talk flaps while the setup types, grin on the punchline, blink now and then. */
+.dad-talk, .dad-grin { opacity: 0; }
+.dad-blink { opacity: 0; animation: djg-blink-eye 5s steps(1) infinite; }
+@keyframes djg-blink-eye { 0%, 96% { opacity: 0; } 97% { opacity: 1; } 99% { opacity: 0; } }
+.djg.is-thinking .dad-talk { animation: djg-flap .26s steps(1) infinite; }
 @keyframes djg-flap { 0% { opacity: 0; } 50% { opacity: 1; } }
-.djg.is-thinking .dad-brows { animation: djg-brows .35s ease-in-out infinite alternate; }
-@keyframes djg-brows { to { transform: translateY(-6px); } }
-.djg.is-punchline .dad-mouth-smile { opacity: 0; }
-.djg.is-punchline .dad-mouth-grin { opacity: 1; }
-.djg.is-punchline .dad-crinkle { opacity: 1; }
-.djg.is-punchline .dad-eye { animation: none; transform: scaleY(.72); }
-.djg.is-punchline .dad-brows { transform: translateY(-7px); transition: transform .2s; }
-.djg.is-punchline .dad-head { animation: djg-laugh .15s ease-in-out 8 alternate; }
-@keyframes djg-laugh { to { transform: translateY(-6px) rotate(3deg); } }
-.dad-tie { transform-origin: 110px 198px; animation: djg-tie 3s ease-in-out infinite; }
-@keyframes djg-tie { 0%, 100% { transform: rotate(4deg); } 50% { transform: rotate(-4deg); } }
+.djg.is-punchline .dad-grin { opacity: 1; }
+.djg.is-punchline .dad-blink { animation: none; }
+.djg.is-punchline .dad { animation: djg-laugh .15s ease-in-out 8 alternate; }
+@keyframes djg-laugh { to { transform: translateY(-6px) rotate(2deg); } }
 
 .djg-bubbles { display: flex; flex-direction: column; gap: 14px; }
 .djg-bubble {

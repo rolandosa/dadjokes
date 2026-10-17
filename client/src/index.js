@@ -1,6 +1,6 @@
 import { definePage } from '@veeva/vault';
 import css from './styles.css';
-import { DAD_SVG } from './dad.js';
+import { createDad } from './dad.js';
 import { CATEGORIES, GROAN_LEVELS, generateJoke, levelByKey, randomDadLine } from './jokes.js';
 import { drumroll, groan, rimshot } from './sound.js';
 import { loadHallOfGroans, rateJoke, saveJoke } from './vault.js';
@@ -140,8 +140,7 @@ export default definePage(({ element }) => {
   const drum = el('div', { class: 'djg-drumroll', text: '🥁 drrrrrrrrrrrr...' });
   const punch = el('div', { class: 'djg-punch' });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
-  const dadHolder = el('div');
-  dadHolder.innerHTML = DAD_SVG;
+  const dadHolder = createDad();
   const theatre = el(
     'section',
     { class: 'djg-panel' },

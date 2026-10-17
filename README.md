@@ -6,7 +6,7 @@ A Veeva Vault **Custom Page** that generates dad jokes, stores every joke it tel
 
 ## What it does
 
-- **Pull the lever.** Dad types out the setup, a drum roll plays, then the punchline slams in with a *BA-DUM-TSS!*, a rimshot and emoji confetti. Dad winks and wiggles his mustache.
+- **Pull the lever.** Dad, a felt puppet, flaps his mouth while the setup types out, a drum roll plays, then the punchline slams in with a *BA-DUM-TSS!*, a rimshot and emoji confetti while Dad laughs. He blinks every few seconds.
 - **Pick a category.** Classics, Grill Talk, Lab Coat, Vault & Pharma, Zoo Puns, or Surprise me. Jokes already told aren't repeated until a category runs dry.
 - **Rate the damage.** In dad-joke land, the more it hurts the better:
 
@@ -32,7 +32,9 @@ There is no server code. The page is client code only, and it reads and writes V
 | `client/src/jokes.js` | Joke library, categories and the Groan-o-Meter levels |
 | `client/src/vault.js` | Vault API calls: create the joke, record the rating, VQL for the lists and stats |
 | `client/src/sound.js` | Drum roll, rimshot and groan, synthesised with Web Audio (no audio files) |
-| `client/src/dad.js` | Dad, as an SVG |
+| `client/src/dad.js` | Dad: four stacked photo frames (rest, talk, grin, blink) swapped by CSS |
+| `client/assets/` | The four Dad frames as transparent WebPs, inlined into the bundle |
+| `scripts/cutout.py` | Turns new Dad photos into those WebPs (keys out the background, resizes to 600px wide) |
 | `preview/index.html` | Local preview with a fake in-memory Vault API |
 
 ### The `dad_joke__c` object
@@ -70,3 +72,14 @@ cd .. && python3 -m http.server   # then open http://localhost:8000/preview/
 ```
 
 The preview stands in for Vault with an in-memory `dad_joke__c` table, so you can pull the lever without touching a Vault.
+
+### Replacing Dad
+
+Supply four photos that are identical apart from the face: rest (mouth closed), talk (mouth part open), grin (big laugh) and blink (eyes closed), same size and framing. Then:
+
+```sh
+pip install numpy pillow scipy
+python3 scripts/cutout.py rest.jpg talk.jpg grin.jpg blink.jpg   # writes client/assets/*.webp
+```
+
+The script expects a light, neutral background (white, light grey or a checkerboard).

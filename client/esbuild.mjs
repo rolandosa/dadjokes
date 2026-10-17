@@ -7,5 +7,5 @@ await esbuild.build({
   minify: true,
   outdir: 'dist',
   format: 'esm',
-  loader: { '.css': 'text' },
+  loader: { '.css': 'text', '.webp': 'dataurl' },
 });
