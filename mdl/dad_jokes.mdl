@@ -1,0 +1,96 @@
+RECREATE Picklist groan_level__c (
+   label('Groan Level'),
+   active(true),
+   can_add_values(false),
+   can_reorder_values(false),
+   Picklistentry polite_nod__c (value('Polite Nod'), order(1), active(true)),
+   Picklistentry eye_roll__c (value('Eye Roll'), order(2), active(true)),
+   Picklistentry audible_groan__c (value('Audible Groan'), order(3), active(true)),
+   Picklistentry full_facepalm__c (value('Full Facepalm'), order(4), active(true)),
+   Picklistentry left_the_room__c (value('Left the Room'), order(5), active(true))
+);
+
+RECREATE Object dad_joke__c (
+   label('Dad Joke'),
+   label_plural('Dad Jokes'),
+   active(true),
+   description('Jokes produced by the Dad-O-Matic 3000 custom page, with their Groan-o-Meter rating.'),
+   in_menu(true),
+   allow_attachments(false),
+   enable_esignatures(false),
+   audit(true),
+   order(0),
+   dynamic_security(false),
+   system_managed(false),
+   object_class('base'),
+   allow_types(false),
+   Field joke_setup__c (
+      label('Setup'),
+      type('String'),
+      active(true),
+      required(true),
+      unique(false),
+      max_length(1500),
+      list_column(true),
+      order(10)
+   ),
+   Field joke_punchline__c (
+      label('Punchline'),
+      type('String'),
+      active(true),
+      required(true),
+      unique(false),
+      max_length(1500),
+      list_column(true),
+      order(11)
+   ),
+   Field joke_category__c (
+      label('Category'),
+      type('String'),
+      active(true),
+      required(false),
+      unique(false),
+      max_length(50),
+      list_column(true),
+      order(12)
+   ),
+   Field groan_level__c (
+      label('Groan Level'),
+      type('Picklist'),
+      active(true),
+      required(false),
+      unique(false),
+      list_column(true),
+      order(13),
+      multi_value(false),
+      picklist('Picklist.groan_level__c')
+   ),
+   Field groan_score__c (
+      label('Groan Score'),
+      type('Number'),
+      active(true),
+      required(false),
+      unique(false),
+      list_column(true),
+      order(14),
+      min_value(0),
+      max_value(5),
+      scale(0)
+   )
+);
+
+RECREATE Page dad_joke_generator__c (
+   label('Dad Joke Generator'),
+   active(true),
+   client_distribution('Clientdistribution.dad_jokes__c'),
+   page_client_code('Pageclientcode.dad_joke_generator__c'),
+   url_path_name('dad-jokes')
+);
+
+RECREATE Tab dad_jokes__c (
+   active(true),
+   label('Dad Jokes'),
+   order(900),
+   page('Page.dad_joke_generator__c'),
+   url('https://${Vault.domain}/ui/#custom/page/${Page.url_path_name}')
+);

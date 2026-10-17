@@ -1,0 +1,9 @@
+{
+  "name": "dad_jokes__c",
+  "pages": [
+    {
+      "name": "dad_joke_generator__c",
+      "file": "dist/dad-jokes.js"
+    }
+  ]
+}
