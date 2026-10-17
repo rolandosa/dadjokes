@@ -1,96 +1,115 @@
-// Dad, drawn in SVG as a felt hand puppet. Classes on the parts are animated from styles.css.
+// Dad, drawn in SVG in an outlined cartoon style. Classes on the parts are animated from styles.css.
+const INK = '#2a2420';
+const line = `stroke="${INK}" stroke-linecap="round" stroke-linejoin="round"`;
+
 export const DAD_SVG = `
 <svg class="dad" viewBox="0 0 220 262" aria-hidden="true">
   <defs>
-    <filter id="djg-felt" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="3" seed="7" result="noise"/>
-      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 -0.45 0.32" result="speckle"/>
-      <feComposite in="speckle" in2="SourceGraphic" operator="in" result="fuzz"/>
-      <feBlend in="SourceGraphic" in2="fuzz" mode="multiply"/>
-    </filter>
-    <radialGradient id="djg-skin" cx="50%" cy="38%" r="65%">
-      <stop offset="0" stop-color="#fbdcbc"/>
-      <stop offset=".7" stop-color="#f4c9a3"/>
-      <stop offset="1" stop-color="#e3b18a"/>
+    <radialGradient id="djg-skin" cx="42%" cy="34%" r="70%">
+      <stop offset="0" stop-color="#f5c7a2"/>
+      <stop offset=".65" stop-color="#ebb48d"/>
+      <stop offset="1" stop-color="#d69a74"/>
     </radialGradient>
-    <radialGradient id="djg-nose" cx="45%" cy="60%" r="60%">
-      <stop offset="0" stop-color="#fad6b4"/>
-      <stop offset=".75" stop-color="#ecbb93"/>
-      <stop offset="1" stop-color="#d49e75"/>
-    </radialGradient>
-    <pattern id="djg-tie" width="6" height="6" patternUnits="userSpaceOnUse">
-      <rect width="6" height="6" fill="#e5862a"/>
-      <rect x="1" y="1" width="3" height="3" rx=".8" fill="#b4521b"/>
-      <circle cx="2.5" cy="2.5" r=".7" fill="#f6c27a"/>
+    <pattern id="djg-tie" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#d9822a"/>
+      <path d="M2 7 C2 2 9 2 9 6 C9 9 5 9 5 7" stroke="#f4b64e" stroke-width="1.4" fill="none"/>
+      <path d="M8 13 C10 10 14 11 13 14" stroke="#f4b64e" stroke-width="1.2" fill="none"/>
+      <circle cx="12" cy="3" r="1" fill="#a9541c"/>
     </pattern>
+    <clipPath id="djg-eye-l"><path d="M69 90 C75 76 97 76 103 90 C97 101 75 101 69 90 Z"/></clipPath>
+    <clipPath id="djg-eye-r"><path d="M151 90 C145 76 123 76 117 90 C123 101 145 101 151 90 Z"/></clipPath>
   </defs>
 
   <g class="dad-body">
-    <path d="M10 262 Q12 204 62 188 L110 204 L158 188 Q208 204 210 262 Z" fill="#1d1d22"/>
-    <path d="M84 186 L110 240 L136 186 Z" fill="#c4d8f1"/>
-    <path d="M86 186 L110 244 L94 252 L66 196 Z" fill="#2a2a31"/>
-    <path d="M134 186 L110 244 L126 252 L154 196 Z" fill="#2a2a31"/>
-    <g class="dad-tie">
-      <path d="M103 200 L117 200 L114.5 213 L105.5 213 Z" fill="url(#djg-tie)"/>
-      <path d="M105.5 213 L114.5 213 L120 246 L110 258 L100 246 Z" fill="url(#djg-tie)"/>
-    </g>
-    <circle cx="110" cy="236" r="2.5" fill="#111"/>
+    <path d="M8 262 C10 220 30 200 70 190 L110 206 L150 190 C190 200 210 220 212 262 Z" fill="#2c2c30" ${line} stroke-width="2.5"/>
+    <path d="M80 186 L110 250 L140 186 Z" fill="#a9c0e6" ${line} stroke-width="2"/>
+    <path d="M86 160 L86 194 C98 202 122 202 134 194 L134 160 Z" fill="#d39570" ${line} stroke-width="2"/>
   </g>
 
   <g class="dad-head">
-    <g filter="url(#djg-felt)">
-      <circle cx="39" cy="108" r="16" fill="#efbf98"/>
-      <circle cx="181" cy="108" r="16" fill="#efbf98"/>
-      <circle cx="41" cy="109" r="8" fill="#d39c72"/>
-      <circle cx="179" cy="109" r="8" fill="#d39c72"/>
-      <path d="M110 6 C162 6 178 46 178 96 L178 136 C178 172 150 190 110 190 C70 190 42 172 42 136 L42 96 C42 46 58 6 110 6 Z" fill="url(#djg-skin)"/>
-      <ellipse cx="48" cy="86" rx="5" ry="16" fill="#c7ab97" opacity=".45"/>
-      <ellipse cx="172" cy="86" rx="5" ry="16" fill="#c7ab97" opacity=".45"/>
-    </g>
+    <path d="M53 92 C40 84 32 96 36 110 C40 124 50 130 58 126 Z" fill="#e5a983" ${line} stroke-width="2.5"/>
+    <path d="M48 100 C42 103 42 112 49 118" fill="none" ${line} stroke-width="1.5" opacity=".6"/>
+    <path d="M167 92 C180 84 188 96 184 110 C180 124 170 130 162 126 Z" fill="#e5a983" ${line} stroke-width="2.5"/>
+    <path d="M172 100 C178 103 178 112 171 118" fill="none" ${line} stroke-width="1.5" opacity=".6"/>
 
-    <g class="dad-brows">
-      <path d="M66 72 Q85 59 103 70" stroke="#6e4b3a" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M117 70 Q135 59 154 72" stroke="#6e4b3a" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M110 8 C150 8 170 38 170 82 C170 112 166 138 156 156 C146 174 130 186 110 186 C90 186 74 174 64 156 C54 138 50 112 50 82 C50 38 70 8 110 8 Z" fill="url(#djg-skin)" ${line} stroke-width="3"/>
+    <ellipse cx="94" cy="36" rx="24" ry="12" fill="#fff" opacity=".22" transform="rotate(-15 94 36)"/>
+    <path d="M96 52 C104 49 116 49 124 52" fill="none" ${line} stroke-width="1.2" opacity=".35"/>
+
+    <path d="M66 140 C72 170 92 186 110 186 C128 186 148 170 154 140 C140 150 128 140 110 142 C92 140 80 150 66 140 Z" fill="#7d6a5f" opacity=".14"/>
+    <ellipse cx="110" cy="145" rx="22" ry="5" fill="#7d6a5f" opacity=".08"/>
+
+    <g class="dad-brows" fill="#4a3428">
+      <path d="M68 73 C78 62 92 62 103 68 L101 74 C90 70 80 70 70 78 Z"/>
+      <path d="M152 73 C142 62 128 62 117 68 L119 74 C130 70 140 70 150 78 Z"/>
     </g>
 
     <g class="dad-eye">
-      <ellipse cx="86" cy="94" rx="17" ry="14" fill="#fff"/>
-      <circle cx="88" cy="96" r="7.5" fill="#86461f"/>
-      <circle cx="88" cy="96" r="3.8" fill="#111"/>
-      <circle cx="90" cy="93.5" r="1.4" fill="#fff"/>
-      <path d="M67 95 Q86 72 105 95 Q86 87 67 95 Z" fill="#f4c7a1"/>
-      <path d="M68 94 Q86 87 104 94" stroke="#a8693f" stroke-width="2" fill="none"/>
+      <path d="M69 90 C75 76 97 76 103 90 C97 101 75 101 69 90 Z" fill="#fff"/>
+      <g clip-path="url(#djg-eye-l)">
+        <circle cx="87" cy="89" r="8.5" fill="#7b4320" stroke="${INK}" stroke-width="1"/>
+        <circle cx="87" cy="89" r="4" fill="#140d0a"/>
+        <circle cx="89.5" cy="86.5" r="1.7" fill="#fff"/>
+      </g>
+      <path d="M68 90 C75 75 97 75 104 89" fill="none" ${line} stroke-width="3.2"/>
+      <path d="M71 93 C78 100 94 101 101 93" fill="none" ${line} stroke-width="1.2" opacity=".7"/>
     </g>
     <g class="dad-eye">
-      <ellipse cx="134" cy="94" rx="17" ry="14" fill="#fff"/>
-      <circle cx="136" cy="96" r="7.5" fill="#86461f"/>
-      <circle cx="136" cy="96" r="3.8" fill="#111"/>
-      <circle cx="138" cy="93.5" r="1.4" fill="#fff"/>
-      <path d="M115 95 Q134 72 153 95 Q134 87 115 95 Z" fill="#f4c7a1"/>
-      <path d="M116 94 Q134 87 152 94" stroke="#a8693f" stroke-width="2" fill="none"/>
+      <path d="M151 90 C145 76 123 76 117 90 C123 101 145 101 151 90 Z" fill="#fff"/>
+      <g clip-path="url(#djg-eye-r)">
+        <circle cx="133" cy="89" r="8.5" fill="#7b4320" stroke="${INK}" stroke-width="1"/>
+        <circle cx="133" cy="89" r="4" fill="#140d0a"/>
+        <circle cx="135.5" cy="86.5" r="1.7" fill="#fff"/>
+      </g>
+      <path d="M152 90 C145 75 123 75 116 89" fill="none" ${line} stroke-width="3.2"/>
+      <path d="M149 93 C142 100 126 101 119 93" fill="none" ${line} stroke-width="1.2" opacity=".7"/>
+    </g>
+    <g class="dad-crinkle" fill="none" ${line} stroke-width="1.2">
+      <path d="M75 101 C82 104 92 104 98 101"/><path d="M122 101 C128 104 138 104 145 101"/>
+      <path d="M66 93 L61 91"/><path d="M66 97 L61 98"/>
+      <path d="M154 93 L159 91"/><path d="M154 97 L159 98"/>
     </g>
 
-    <path class="dad-mouth" d="M60 141 Q110 152 160 141 Q152 186 110 188 Q68 186 60 141 Z" fill="#5b1515"/>
-    <ellipse cx="120" cy="163" rx="24" ry="8" fill="#d07a78"/>
-
-    <g class="dad-jaw" filter="url(#djg-felt)">
-      <path d="M56 148 Q110 186 164 148 Q170 196 110 202 Q50 196 56 148 Z" fill="#f2c39d"/>
-      <path d="M62 152 Q110 188 158 152" stroke="#8c3a2c" stroke-width="3" fill="none"/>
+    <path d="M105 92 C103 103 101 110 99 116" fill="none" ${line} stroke-width="1.4" opacity=".45"/>
+    <path d="M98 114 C90 116 88 128 96 132 C100 136 120 136 124 132 C132 128 130 116 122 114 C118 104 102 104 98 114 Z" fill="#eeb48d"/>
+    <ellipse cx="113" cy="120" rx="3" ry="4" fill="#fff" opacity=".6"/>
+    <g fill="none" ${line} stroke-width="2.2">
+      <path d="M97 119 C88 123 89 133 98 133"/>
+      <path d="M123 119 C132 123 131 133 122 133"/>
+      <path d="M102 134 C106 137 114 137 118 134"/>
+    </g>
+    <g fill="none" ${line} stroke-width="1.3" opacity=".45">
+      <path d="M88 128 C82 138 84 147 88 152"/>
+      <path d="M132 128 C138 138 136 147 132 151"/>
+      <path d="M100 176 C106 179 114 179 120 176"/>
     </g>
 
-    <g filter="url(#djg-felt)">
-      <path d="M58 140 Q110 154 162 140 Q150 124 110 128 Q70 124 58 140 Z" fill="#f4c7a1"/>
-      <ellipse cx="110" cy="134" rx="15" ry="5" fill="#cf9a72" opacity=".6"/>
-      <path d="M102 84 C99 104 90 114 91 127 C92 144 128 144 129 127 C130 114 121 104 118 84 Z" fill="url(#djg-nose)" stroke="#d29a70" stroke-width="1.5"/>
-      <ellipse cx="106" cy="122" rx="6" ry="4" fill="#fde3c8" opacity=".7"/>
+    <g class="dad-mouth-smile">
+      <path d="M98 157 C106 162 116 162 124 156" fill="none" stroke="#c9786a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M90 151 C100 159 120 159 132 149" fill="none" ${line} stroke-width="3"/>
+      <path d="M88 149 L91 154" fill="none" ${line} stroke-width="1.6"/>
     </g>
-    <path d="M58 140 Q110 154 162 140" stroke="#8c3a2c" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <ellipse cx="102" cy="134" rx="4" ry="2" fill="#b97c55"/>
-    <ellipse cx="118" cy="134" rx="4" ry="2" fill="#b97c55"/>
+    <g class="dad-mouth-open">
+      <path d="M94 150 C102 147 120 147 128 150 C124 166 100 166 94 150 Z" fill="#5a1c1c" ${line} stroke-width="2.5"/>
+      <ellipse cx="111" cy="159" rx="9" ry="3.5" fill="#d0716b"/>
+    </g>
+    <g class="dad-mouth-grin">
+      <path d="M84 147 C100 152 122 152 138 145 C134 174 90 176 84 147 Z" fill="#5a1c1c" ${line} stroke-width="2.8"/>
+      <path d="M88 149 C100 153 122 153 134 147 L133 154 C120 158 100 158 90 155 Z" fill="#fff"/>
+      <ellipse cx="112" cy="165" rx="14" ry="5" fill="#d0716b"/>
+    </g>
   </g>
 
-  <g class="dad-collar">
-    <path d="M80 182 L110 204 L95 214 Z" fill="#d3e3f6" stroke="#9fb8d8" stroke-width="1.5"/>
-    <path d="M140 182 L110 204 L125 214 Z" fill="#d3e3f6" stroke="#9fb8d8" stroke-width="1.5"/>
+  <g class="dad-tie">
+    <path d="M102 202 L118 202 L115 217 L105 217 Z" fill="url(#djg-tie)" ${line} stroke-width="2"/>
+    <path d="M105 217 L115 217 L124 252 L110 262 L96 252 Z" fill="url(#djg-tie)" ${line} stroke-width="2"/>
+  </g>
+  <g class="dad-collar" fill="#bcd0ef" ${line} stroke-width="2">
+    <path d="M84 180 L109 204 L93 219 L77 194 Z"/>
+    <path d="M136 180 L111 204 L127 219 L143 194 Z"/>
+  </g>
+  <g fill="#36363b" ${line} stroke-width="2.2">
+    <path d="M80 188 L62 206 L74 214 L66 224 L100 262 L108 252 Z"/>
+    <path d="M140 188 L158 206 L146 214 L154 224 L120 262 L112 252 Z"/>
   </g>
 </svg>`;

@@ -80,14 +80,18 @@
 @keyframes djg-bob { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-3px); } }
 .dad-eye { transform-box: fill-box; transform-origin: center; animation: djg-blink-eye 5s infinite; }
 @keyframes djg-blink-eye { 0%, 95%, 100% { transform: scaleY(1); } 97.5% { transform: scaleY(.1); } }
-/* Puppet jaw: flaps while Dad talks, drops wide open when he laughs. */
-.dad-jaw { transition: transform .15s; }
-.djg.is-thinking .dad-jaw { animation: djg-talk .16s ease-in-out infinite alternate; }
-@keyframes djg-talk { from { transform: translateY(-8px); } to { transform: translateY(3px); } }
+/* Mouth: smirk at rest, flaps open while Dad talks, big grin with crinkled eyes on the punchline. */
+.dad-mouth-open, .dad-mouth-grin { opacity: 0; }
+.dad-crinkle { opacity: .5; transition: opacity .2s; }
+.djg.is-thinking .dad-mouth-open { animation: djg-flap .28s steps(1) infinite; }
+.djg.is-thinking .dad-mouth-smile { animation: djg-flap .28s steps(1) infinite reverse; }
+@keyframes djg-flap { 0% { opacity: 0; } 50% { opacity: 1; } }
 .djg.is-thinking .dad-brows { animation: djg-brows .35s ease-in-out infinite alternate; }
 @keyframes djg-brows { to { transform: translateY(-6px); } }
-.djg.is-punchline .dad-jaw { animation: djg-guffaw .14s ease-in-out 10 alternate forwards; }
-@keyframes djg-guffaw { from { transform: translateY(2px); } to { transform: translateY(12px); } }
+.djg.is-punchline .dad-mouth-smile { opacity: 0; }
+.djg.is-punchline .dad-mouth-grin { opacity: 1; }
+.djg.is-punchline .dad-crinkle { opacity: 1; }
+.djg.is-punchline .dad-eye { animation: none; transform: scaleY(.72); }
 .djg.is-punchline .dad-brows { transform: translateY(-7px); transition: transform .2s; }
 .djg.is-punchline .dad-head { animation: djg-laugh .15s ease-in-out 8 alternate; }
 @keyframes djg-laugh { to { transform: translateY(-6px) rotate(3deg); } }
