@@ -2,7 +2,6 @@ import { definePage } from '@veeva/vault';
 import css from './styles.css';
 import { createDad } from './dad.js';
 import { CATEGORIES, GROAN_LEVELS, generateJoke, levelByKey, randomDadLine } from './jokes.js';
-import { drumroll, groan, rimshot } from './sound.js';
 import { loadHallOfGroans, rateJoke, saveJoke } from './vault.js';
 
 const FLOATERS = ['👔', '🧦', '🩴', '🍖', '🔧', '📺', '🧢', '☕', '🪓', '🌭', '⛳', '🔦'];
@@ -89,7 +88,6 @@ export default definePage(({ element }) => {
   const told = new Set();
   let category = 'any';
   let current = null; // { setup, punchline, category, id, saving }
-  let muted = false;
   let busy = false;
 
   element.replaceChildren();
@@ -139,12 +137,13 @@ export default definePage(({ element }) => {
   const bubble = el('div', { class: 'djg-bubble' }, setupText, caret);
   const drum = el('div', { class: 'djg-drumroll', text: '🥁 drrrrrrrrrrrr...' });
   const punch = el('div', { class: 'djg-punch' });
+  const reveal = el('button', { class: 'djg-reveal', type: 'button', hidden: '', text: '👉 Hit me with it!' });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
   const dadHolder = createDad();
   const theatre = el(
     'section',
     { class: 'djg-panel' },
-    el('div', { class: 'djg-theatre' }, dadHolder, el('div', { class: 'djg-bubbles' }, bubble, drum, punch), badum),
+    el('div', { class: 'djg-theatre' }, dadHolder, el('div', { class: 'djg-bubbles' }, bubble, reveal, drum, punch), badum),
   );
 
   // Machine
@@ -174,15 +173,6 @@ export default definePage(({ element }) => {
     el('span', { class: 'arm' }, el('span', { class: 'knob' })),
   );
   const pull = el('button', { class: 'djg-pull', type: 'button', text: 'PULL FOR PUN 🎰', onclick: () => tellJoke() });
-  const mute = el('button', {
-    class: 'djg-mute',
-    type: 'button',
-    text: '🔊 Sound: ON',
-    onclick: () => {
-      muted = !muted;
-      mute.textContent = muted ? '🔇 Sound: OFF (coward)' : '🔊 Sound: ON';
-    },
-  });
   const machineError = el('div', { class: 'djg-error' });
   const machine = el(
     'section',
@@ -190,7 +180,6 @@ export default definePage(({ element }) => {
     el('h2', { text: '🎛️ Pun Selector' }),
     catRow,
     el('div', { class: 'djg-lever-row' }, lever, pull),
-    mute,
     el('p', { class: 'djg-quote', text: 'Every joke is filed in Vault. For posterity. And compliance.' }),
     machineError,
   );
@@ -296,9 +285,16 @@ export default definePage(({ element }) => {
     root.classList.add('is-thinking');
     await typeOut(joke.setup);
     root.classList.remove('is-thinking');
+
+    // Dad waits for the audience to ask for it.
+    verdict.textContent = 'Go on, ask Dad for the punchline...';
+    reveal.hidden = false;
+    reveal.focus();
+    await new Promise((resolve) => (reveal.onclick = resolve));
+    reveal.hidden = true;
+
     root.classList.add('is-drumroll');
-    if (!muted) drumroll(1.3);
-    await wait(1400);
+    await wait(900);
     root.classList.remove('is-drumroll');
 
     punch.textContent = joke.punchline;
@@ -306,7 +302,6 @@ export default definePage(({ element }) => {
     punch.classList.add('show');
     badum.classList.add('show');
     root.classList.add('is-punchline');
-    if (!muted) rimshot();
     confetti(['😂', '🥁', '👔', '🤣', '💥', '🧔']);
     verdict.textContent = 'How bad was it? Be honest. Dad can take it.';
 
@@ -324,7 +319,6 @@ export default definePage(({ element }) => {
       b.classList.toggle('chosen', GROAN_LEVELS[i] === level);
     });
     setNeedle(level.score);
-    if (!muted) groan(level.score);
     verdict.textContent = `${level.emoji} ${level.quip}`;
     verdict.classList.remove('pop');
     void verdict.offsetWidth;

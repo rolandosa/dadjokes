@@ -6,7 +6,7 @@ A Veeva Vault **Custom Page** that generates dad jokes, stores every joke it tel
 
 ## What it does
 
-- **Pull the lever.** Dad, a felt puppet, flaps his mouth while the setup types out, a drum roll plays, then the punchline slams in with a *BA-DUM-TSS!*, a rimshot and emoji confetti while Dad laughs. He blinks every few seconds.
+- **Pull the lever.** Dad, a felt puppet, flaps his mouth while the setup types out, then waits. Press **Hit me with it!** and the punchline slams in with a *BA-DUM-TSS!* and emoji confetti while Dad laughs. He blinks every few seconds.
 - **Pick a category.** Classics, Grill Talk, Lab Coat, Vault & Pharma, Zoo Puns, or Surprise me. Jokes already told aren't repeated until a category runs dry.
 - **Rate the damage.** In dad-joke land, the more it hurts the better:
 
@@ -18,7 +18,7 @@ A Veeva Vault **Custom Page** that generates dad jokes, stores every joke it tel
   | 4 | 🤦 Full Facepalm | LinkedIn updated: "Professional Punsmith". |
   | 5 | 🚪 Left the Room | The highest honour a dad can receive. |
 
-  The gauge needle swings, a synthesised groan plays, and you earn Dad Points.
+  The gauge needle swings and you earn Dad Points.
 - **Hall of Groans** shows the top-rated jokes; **Fresh Off the Grill** shows the latest ones. The header tracks jokes told, jokes judged and the average groan.
 
 ## How it's built
@@ -31,7 +31,6 @@ There is no server code. The page is client code only, and it reads and writes V
 | `client/src/index.js` | The page (`definePage`), built with plain DOM, no framework |
 | `client/src/jokes.js` | Joke library, categories and the Groan-o-Meter levels |
 | `client/src/vault.js` | Vault API calls: create the joke, record the rating, VQL for the lists and stats |
-| `client/src/sound.js` | Drum roll, rimshot and groan, synthesised with Web Audio (no audio files) |
 | `client/src/dad.js` | Dad: four stacked photo frames (rest, talk, grin, blink) swapped by CSS |
 | `client/assets/` | The four Dad frames as transparent WebPs, inlined into the bundle |
 | `scripts/cutout.py` | Turns new Dad photos into those WebPs (keys out the background, resizes to 600px wide) |

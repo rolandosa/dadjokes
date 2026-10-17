@@ -109,6 +109,16 @@
 .djg-punch.show { animation: djg-slam .55s cubic-bezier(.2, 1.6, .4, 1) forwards; }
 @keyframes djg-slam { to { transform: scale(1) rotate(-1.5deg); opacity: 1; } }
 
+.djg-reveal {
+  align-self: flex-start; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff; background: var(--sky);
+  border: 4px solid var(--ink); border-radius: 16px; padding: 12px 20px; cursor: pointer;
+  box-shadow: 0 6px 0 var(--ink); animation: djg-nudge 1.2s ease-in-out infinite;
+}
+.djg-reveal:hover { animation-play-state: paused; transform: translateY(-2px) rotate(-2deg); }
+.djg-reveal:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink); }
+.djg-reveal[hidden] { display: none; }
+@keyframes djg-nudge { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-3deg) scale(1.04); } }
+
 .djg-drumroll {
   display: none; font-family: 'Bungee', sans-serif; font-size: 22px; color: var(--sky);
   animation: djg-shake .08s linear infinite;
@@ -166,10 +176,6 @@
 .djg-pull:hover { transform: translateY(-2px) rotate(-1deg); }
 .djg-pull:active, .djg-pull:disabled { transform: translateY(5px); box-shadow: 0 2px 0 var(--ink); }
 .djg-pull:disabled { opacity: .7; cursor: wait; }
-.djg-mute {
-  margin-top: 14px; font: 700 14px 'Nunito', sans-serif; background: none; border: 2px dashed var(--ink);
-  border-radius: 10px; padding: 6px 10px; cursor: pointer;
-}
 .djg-quote { font-family: 'Patrick Hand', cursive; font-size: 20px; margin: 14px 0 0; color: #555; }
 
 /* Groan-o-Meter */
