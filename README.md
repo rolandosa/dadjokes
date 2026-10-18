@@ -9,7 +9,7 @@ Press **Hit me with it!** for the punchline, then rate the damage on the **Groan
 ![Dad-O-Matic on the web](docs/screenshot.png)
 
 The same page also runs inside Veeva Vault as a Custom Page, storing jokes as Vault records.
-[`docs/SPEC.md`](docs/SPEC.md) has the details.
+[`docs/SPEC.md`](docs/SPEC.md) has the details; [`docs/BACKLOG.md`](docs/BACKLOG.md) lists what's next.
 
 ## What it does
 

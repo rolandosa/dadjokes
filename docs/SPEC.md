@@ -125,6 +125,8 @@ credentials. `STORE=dynamodb` uses DynamoDB Local (`pnpm local:tables`).
 
 ## Later
 
+- An Android app on Google Play with a bottom banner ad: [BACKLOG B-1](BACKLOG.md#b-1-android-app-on-google-play-with-a-bottom-banner-ad).
+
 - A custom domain (Route 53 + ACM) instead of the CloudFront address.
 - Per-visitor rate limiting (AWS WAF) if the link is shared widely.
 - Let the Vault page call the AI writer through a Vault Connection.
