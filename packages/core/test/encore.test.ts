@@ -25,7 +25,7 @@ async function fillBank(repo: Repo, count: number, category: ToldJoke['category'
       id: ulid(),
       key: 'ai',
       category,
-      setup: `Banked joke ${i}?`,
+      setup: `Banked ${category} joke ${i}?`,
       punchline: `Banked pun ${i}.`,
       level: null,
       score: null,
@@ -73,8 +73,9 @@ describe('encores', () => {
     const encores = told.filter((t) => t.source === 'encore');
     expect(encores.length).toBeGreaterThan(0);
     for (const e of encores) {
+      // From the asked category: a banked animals joke or an earlier model-written one, never food.
       expect(e.joke.category).toBe('animals');
-      expect(e.joke.setup).toMatch(/^Banked joke \d+\?$/);
+      expect(e.joke.setup).not.toMatch(/^Banked food joke/);
       expect(e.joke.reusedFrom).toMatch(/^[0-9A-Z]{26}$/);
       const i = told.indexOf(e);
       expect(told.slice(Math.max(0, i - 20), i).map((t) => t.joke.setup)).not.toContain(
