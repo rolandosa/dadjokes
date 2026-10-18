@@ -97,6 +97,18 @@ function jokeItem(rec, lead) {
   );
 }
 
+/** A header stat: icon, label and value. On phones the label hides (styles.css); the title and
+ * aria-label keep it for a tap-and-hold and for screen readers. */
+function statChip(icon, label, value) {
+  return el(
+    'span',
+    { class: 'djg-chip', title: label, 'aria-label': label },
+    el('span', { 'aria-hidden': 'true', text: `${icon} ` }),
+    el('span', { class: 'djg-chip-label', text: `${label}: ` }),
+    value,
+  );
+}
+
 /**
  * A Fullscreen button, on its own row above the banner. Uses the browser's fullscreen when the
  * host allows it, else fills the window; Esc exits either way.
@@ -187,9 +199,9 @@ export function mountDadOMatic(element, backend) {
       el(
         'div',
         { class: 'djg-stats' },
-        el('span', { class: 'djg-chip' }, '🎤 Jokes told: ', statTold),
-        el('span', { class: 'djg-chip' }, '⚖️ Judged: ', statRated),
-        el('span', { class: 'djg-chip' }, '😩 Avg groan: ', statAvg),
+        statChip('🎤', 'Jokes told', statTold),
+        statChip('⚖️', 'Judged', statRated),
+        statChip('😩', 'Avg groan', statAvg),
       ),
     ),
   );

@@ -247,6 +247,17 @@
     padding: 32px 12px;
     margin-bottom: 12px;
   }
+  /* Stats as icon + number only, all on one line. */
+  .djg-chip-label {
+    display: none;
+  }
+  .djg-stats {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .djg-chip {
+    padding: 3px 10px;
+  }
   .djg-theatre {
     grid-template-columns: 1fr;
     justify-items: center;
