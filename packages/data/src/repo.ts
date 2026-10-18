@@ -1,4 +1,7 @@
-import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import {
+  ConditionalCheckFailedException,
+  TransactionCanceledException,
+} from '@aws-sdk/client-dynamodb';
 import {
   GetCommand,
   QueryCommand,
@@ -20,6 +23,7 @@ const JOKE_FIELDS = [
   'level',
   'score',
   'toldAt',
+  'reusedFrom',
 ] as const;
 
 function toJoke(item: Record<string, unknown>): ToldJoke {
@@ -36,15 +40,17 @@ export class DynamoRepo implements Repo {
 
   async addJoke(joke: ToldJoke): Promise<void> {
     // An unrated joke has no level/score attributes at all (not NULLs), so rateJoke's
-    // "not rated yet" condition can test for their absence.
-    const { level: _level, score: _score, ...unrated } = joke;
+    // "not rated yet" condition can test for their absence; an original has no reusedFrom,
+    // so originalsFrom can filter on its absence.
+    const { level: _level, score: _score, reusedFrom, ...unrated } = joke;
+    const row = reusedFrom ? { ...unrated, reusedFrom } : unrated;
     await this.db.send(
       new TransactWriteCommand({
         TransactItems: [
           {
             Put: {
               TableName: this.table,
-              Item: { PK: FEED, SK: feedSk(joke.id), ...unrated },
+              Item: { PK: FEED, SK: feedSk(joke.id), ...row },
               ConditionExpression: 'attribute_not_exists(PK)',
             },
           },
@@ -52,13 +58,62 @@ export class DynamoRepo implements Repo {
             Update: {
               TableName: this.table,
               Key: { PK: STATS, SK: STATS },
-              UpdateExpression: 'ADD told :one',
+              // bank: originals stored; sinceReuse: originals since the last encore.
+              UpdateExpression: reusedFrom
+                ? 'ADD told :one, reused :one'
+                : 'ADD told :one, bank :one, sinceReuse :one',
               ExpressionAttributeValues: { ':one': 1 },
             },
           },
         ],
       }),
     );
+  }
+
+  async claimReuse(minBank: number, gap: number): Promise<boolean> {
+    try {
+      await this.db.send(
+        new UpdateCommand({
+          TableName: this.table,
+          Key: { PK: STATS, SK: STATS },
+          UpdateExpression: 'SET sinceReuse = :zero',
+          ConditionExpression:
+            'bank > :minBank AND (attribute_not_exists(sinceReuse) OR sinceReuse >= :gap)',
+          ExpressionAttributeValues: { ':zero': 0, ':minBank': minBank, ':gap': gap },
+        }),
+      );
+      return true;
+    } catch (err) {
+      if (err instanceof ConditionalCheckFailedException) return false;
+      throw err;
+    }
+  }
+
+  async oldestId(): Promise<string | null> {
+    const out = await this.db.send(
+      new QueryCommand({
+        TableName: this.table,
+        KeyConditionExpression: 'PK = :pk',
+        ExpressionAttributeValues: { ':pk': FEED },
+        ProjectionExpression: 'id',
+        Limit: 1,
+      }),
+    );
+    const id = out.Items?.[0]?.id;
+    return typeof id === 'string' ? id : null;
+  }
+
+  async originalsFrom(fromId: string, limit: number): Promise<ToldJoke[]> {
+    const out = await this.db.send(
+      new QueryCommand({
+        TableName: this.table,
+        KeyConditionExpression: 'PK = :pk AND SK >= :from',
+        FilterExpression: 'attribute_not_exists(reusedFrom)',
+        ExpressionAttributeValues: { ':pk': FEED, ':from': feedSk(fromId) },
+        Limit: limit,
+      }),
+    );
+    return (out.Items ?? []).map(toJoke);
   }
 
   async rateJoke(id: string, level: GroanLevel): Promise<'rated' | 'missing' | 'already'> {

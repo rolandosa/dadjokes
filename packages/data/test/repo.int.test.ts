@@ -20,6 +20,7 @@ const joke = (setup: string): ToldJoke => ({
   level: null,
   score: null,
   toldAt: new Date().toISOString(),
+  reusedFrom: null,
 });
 
 beforeAll(async () => {
@@ -45,6 +46,24 @@ describe('DynamoRepo (DynamoDB Local)', () => {
     expect(board.recent.map((j) => j.setup)).toEqual(['second', 'first']);
     expect(board.stats).toEqual({ told: 2, rated: 2, avg: 3.5 });
     expect(await repo.recentSetups(1)).toEqual(['second']);
+  });
+
+  it('opens the encore slot only past the bank size, then after the gap', async () => {
+    const fresh = new DynamoRepo(makeClient(), name);
+    // Two originals are already stored above: bank = 2, sinceReuse = 2.
+    expect(await fresh.claimReuse(2, 2)).toBe(false); // bank must be MORE than minBank
+    expect(await fresh.claimReuse(1, 3)).toBe(false); // only 2 since the last encore
+    expect(await fresh.claimReuse(1, 2)).toBe(true);
+    expect(await fresh.claimReuse(1, 0)).toBe(true); // gap 0: always open once bank allows
+    expect(await fresh.claimReuse(1, 1)).toBe(false); // the claim reset sinceReuse to 0
+
+    const oldest = await fresh.oldestId();
+    expect(oldest).not.toBeNull();
+    const encore = { ...joke('first'), reusedFrom: oldest };
+    await fresh.addJoke(encore);
+    const originals = await fresh.originalsFrom(oldest!, 10);
+    expect(originals.map((j) => j.setup)).toEqual(['first', 'second']);
+    expect((await fresh.board(8)).recent[0]).toMatchObject({ id: encore.id, reusedFrom: oldest });
   });
 
   it('counts model calls per day', async () => {

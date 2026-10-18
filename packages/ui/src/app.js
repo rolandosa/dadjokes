@@ -458,7 +458,9 @@ export function mountDadOMatic(element, backend) {
     badum.classList.add('show');
     root.classList.add('is-punchline');
     confetti(root, ['😂', '🥁', '👔', '🤣', '💥', '🧔']);
-    verdict.textContent = 'How bad was it? Be honest. Dad can take it.';
+    verdict.textContent = joke.reusedFrom
+      ? '🔁 Encore! A repeat from the joke bank, by popular demand. Rate it again.'
+      : 'How bad was it? Be honest. Dad can take it.';
 
     levelButtons.forEach((b) => (b.disabled = false));
     lever.disabled = pull.disabled = miniPull.disabled = false;

@@ -1,4 +1,4 @@
-import { ULID_RE, ulid } from './ids.js';
+import { ULID_RE, ulid, ulidFloor, ulidTime } from './ids.js';
 import { CATEGORIES, CATEGORY_KEYS, generateJoke, isCategory, levelByKey } from './jokes.js';
 import type { CategoryKey } from './jokes.js';
 import type { Llm, Repo } from './ports.js';
@@ -18,8 +18,48 @@ export class Conflict extends Error {
   override name = 'Conflict';
 }
 
-/** How many recent setups the model is asked not to repeat. */
+/** How many recent setups the model is asked not to repeat, and an encore must avoid. */
 const AVOID_COUNT = 20;
+
+/**
+ * Encores (SPEC "Encores"): once the bank holds more than REUSE_MIN_BANK original jokes, a
+ * stored joke may be told again, but only after REUSE_GAP originals since the last encore.
+ * So never two in a row, and at most one in any ten consecutive jokes.
+ */
+export const REUSE_MIN_BANK = 200;
+export const REUSE_GAP = 9;
+
+/** How many neighbouring bank jokes one encore draw looks at, and how many draws it tries. */
+const DRAW_SIZE = 25;
+const DRAWS = 3;
+
+/**
+ * A stored original for an encore: from a random point in the bank's history, the best-rated
+ * joke nearby that fits the category and was not told recently. Null when no draw finds one.
+ */
+async function pickEncore(
+  repo: Repo,
+  category: CategoryKey,
+  anyCategory: boolean,
+  avoid: ReadonlySet<string>,
+  now: Date,
+  random: () => number,
+): Promise<ToldJoke | null> {
+  const oldest = await repo.oldestId();
+  if (!oldest) return null;
+  const from = ulidTime(oldest);
+  for (let i = 0; i < DRAWS; i++) {
+    const at = from + Math.floor(random() * Math.max(1, now.getTime() - from));
+    const fits = (await repo.originalsFrom(ulidFloor(at), DRAW_SIZE)).filter(
+      (j) => !avoid.has(j.setup) && (anyCategory || j.category === category),
+    );
+    if (!fits.length) continue;
+    const best = Math.max(...fits.map((j) => j.score ?? 0));
+    const top = fits.filter((j) => (j.score ?? 0) === best);
+    return top[Math.floor(random() * top.length)]!;
+  }
+  return null;
+}
 
 export interface NewJokeOptions {
   /** Model calls allowed per UTC day; past it, jokes come from the library. */
@@ -28,12 +68,13 @@ export interface NewJokeOptions {
   random?: () => number;
 }
 
-/** Why a joke came from the library instead of the model, for the log line. */
+/** Where a joke came from (an encore, the model, or the library and why), for the log line. */
 export type JokeSource =
-  'ai' | 'library-no-llm' | 'library-cap' | 'library-bad-reply' | 'library-llm-error';
+  'encore' | 'ai' | 'library-no-llm' | 'library-cap' | 'library-bad-reply' | 'library-llm-error';
 
 /**
- * Writes a new joke with the model and stores it. Falls back to an untold library joke when
+ * Tells a joke and stores it. When the encore slot is open it repeats a stored joke;
+ * otherwise the model writes a new one. Falls back to an untold library joke when
  * there is no model, the daily cap is reached, the call fails or the reply breaks the rules,
  * so the lever always produces a joke.
  */
@@ -45,11 +86,32 @@ export async function newJoke(
 ): Promise<{ joke: ToldJoke; source: JokeSource }> {
   const now = opts.now ?? new Date();
   const random = opts.random ?? Math.random;
-  const pick: CategoryKey =
-    typeof category === 'string' && isCategory(category)
-      ? category
-      : CATEGORY_KEYS[Math.floor(random() * CATEGORY_KEYS.length)]!;
+  const asked = typeof category === 'string' && isCategory(category);
+  const pick: CategoryKey = asked
+    ? category
+    : CATEGORY_KEYS[Math.floor(random() * CATEGORY_KEYS.length)]!;
   const recent = await repo.recentSetups(AVOID_COUNT);
+  const toldAt = now.toISOString();
+
+  if (await repo.claimReuse(REUSE_MIN_BANK, REUSE_GAP)) {
+    const original = await pickEncore(repo, pick, !asked, new Set(recent), now, random);
+    if (original) {
+      const encore: ToldJoke = {
+        id: ulid(),
+        key: original.key,
+        category: original.category,
+        setup: original.setup,
+        punchline: original.punchline,
+        level: null,
+        score: null,
+        toldAt,
+        reusedFrom: original.id,
+      };
+      await repo.addJoke(encore);
+      return { joke: encore, source: 'encore' };
+    }
+    // No fitting joke found: the slot was spent, and a new joke is told instead.
+  }
 
   let source: JokeSource = 'library-no-llm';
   let written: { setup: string; punchline: string } | null = null;
@@ -75,7 +137,8 @@ export async function newJoke(
     ...base,
     level: null,
     score: null,
-    toldAt: now.toISOString(),
+    toldAt,
+    reusedFrom: null,
   };
   await repo.addJoke(joke);
   return { joke, source };

@@ -11,6 +11,8 @@ export interface ToldJoke {
   level: GroanKey | null;
   score: number | null;
   toldAt: string;
+  /** For an encore (a reused joke), the id of the joke it repeats; null for an original. */
+  reusedFrom: string | null;
 }
 
 export interface Stats {

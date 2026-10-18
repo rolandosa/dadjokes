@@ -31,6 +31,7 @@ describe('DynamoRepo writes', () => {
       level: null,
       score: null,
       toldAt: '2026-10-18T00:00:00Z',
+      reusedFrom: null,
     });
     const put = (sent[0] as TransactWriteCommand).input.TransactItems![0]!.Put!;
     expect(put.Item).not.toHaveProperty('score');

@@ -6,10 +6,33 @@ import type { Board, ToldJoke } from '@dadjokes/core/types';
 export function memoryRepo(): Repo {
   const jokes = new Map<string, ToldJoke>();
   const aiCalls = new Map<string, number>();
+  // DynamoRepo's STATS counters for encores.
+  let bank = 0;
+  let sinceReuse: number | undefined;
+  const byId = () => [...jokes.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
   return {
     async addJoke(joke) {
       if (jokes.has(joke.id)) throw new Error('duplicate id');
       jokes.set(joke.id, { ...joke });
+      if (!joke.reusedFrom) {
+        bank += 1;
+        sinceReuse = (sinceReuse ?? 0) + 1;
+      }
+    },
+    async claimReuse(minBank: number, gap: number) {
+      if (bank <= minBank || (sinceReuse !== undefined && sinceReuse < gap)) return false;
+      sinceReuse = 0;
+      return true;
+    },
+    async oldestId() {
+      return byId()[0]?.id ?? null;
+    },
+    async originalsFrom(fromId: string, limit: number) {
+      return byId()
+        .filter((j) => j.id >= fromId)
+        .slice(0, limit)
+        .filter((j) => !j.reusedFrom)
+        .map((j) => ({ ...j }));
     },
     async rateJoke(id: string, level: GroanLevel) {
       const joke = jokes.get(id);

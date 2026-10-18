@@ -13,6 +13,16 @@ export interface Repo {
   board(limit: number): Promise<Board>;
   /** Setups of the most recently told jokes, newest first. */
   recentSetups(limit: number): Promise<string[]>;
+  /**
+   * Takes the one encore slot if it is open: the bank (original jokes stored) holds more than
+   * `minBank` jokes and at least `gap` originals were told since the last encore. Atomic, so
+   * two visitors pulling at once cannot both get an encore. Returns whether it was taken.
+   */
+  claimReuse(minBank: number, gap: number): Promise<boolean>;
+  /** The id of the first joke ever told, or null when none is stored. */
+  oldestId(): Promise<string | null>;
+  /** Up to `limit` original (not reused) jokes with ids at or after `fromId`, oldest first. */
+  originalsFrom(fromId: string, limit: number): Promise<ToldJoke[]>;
   /** Adds one to the count of model calls on `day` (YYYY-MM-DD) and returns the new count. */
   bumpAiCalls(day: string): Promise<number>;
 }
