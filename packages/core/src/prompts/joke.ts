@@ -8,7 +8,7 @@ export const JOKE_MAX_TOKENS = 200;
 /** Some variety, unlike Pantry's parses: pulling the lever again should give a new joke. */
 export const JOKE_TEMPERATURE = 1;
 
-export const JOKE_SYSTEM = `You write one brand-new dad joke for the Dad-O-Matic 3000, a public joke page anyone can open.
+export const JOKE_SYSTEM = `You write one brand-new dad joke for the Dad-O-Matic 3000. The audience is Veeva Systems employees, who build Veeva Vault and other software for the life-sciences industry, so insider jokes about Vault, pharma and their working life land well.
 
 The user message is JSON: {"topic": string, "avoid": string[]}. "avoid" lists setups told recently.
 
@@ -19,6 +19,7 @@ Rules:
 - A classic dad joke: a short setup and a groan-worthy pun or wordplay punchline.
 - The joke is about the topic.
 - Family-friendly for all ages: no profanity, innuendo, insults, politics, religion, violence or real people.
+- Affectionate about Veeva, Vault and customers: tease the work, never mock the company, its products, customers or competitors, and make no claims about real drugs or patient safety.
 - Not one of the "avoid" setups, and not a close rewording of one.
 - setup: at most 140 characters. punchline: at most 120 characters. Plain text, one line each, no emoji, no quotation marks around the whole thing.
 - If you cannot write one that follows every rule, return {"setup": null, "punchline": null}.`;

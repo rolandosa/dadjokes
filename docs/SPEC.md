@@ -51,6 +51,9 @@ Joke text never comes from a request: it is written by the model or taken from t
 
 `core/src/prompts/joke.ts`, called through Bedrock's Converse API (`api/src/bedrock.ts`).
 
+- Audience: Veeva employees. The prompt says so, and the `vault` category's topic is Veeva Vault
+  and life-sciences work. Jokes stay affectionate: no mocking Veeva, customers or competitors,
+  and no claims about real drugs or patient safety.
 - Model: `JOKE_MODEL`, from CDK context `jokeModel`, default `us.anthropic.claude-sonnet-4-6`
   (Sonnet 5 / 5.5 and Haiku 5.5 are not enabled on the account). Temperature 1, max 200 tokens.
 - Reply: `{"setup": string, "punchline": string}`, or both null when the model cannot comply.

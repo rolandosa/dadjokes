@@ -98,7 +98,10 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
     ],
   },
   vault: {
-    topic: 'offices, paperwork, documents, pharmacies and medicine',
+    topic:
+      'Veeva Vault and life-sciences work: documents and versions, lifecycles and workflows, ' +
+      'MLR review and claims, regulatory submissions, clinical trials, quality and audits, ' +
+      'pharma sales reps and pharmacies',
     label: 'Vault & Pharma',
     icon: '🗄️',
     jokes: [
