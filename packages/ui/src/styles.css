@@ -878,3 +878,19 @@
     display: none;
   }
 }
+
+.djg-credit {
+  align-self: flex-end;
+  font:
+    700 12px 'Nunito',
+    sans-serif;
+  color: #6a4c93;
+  text-decoration: none;
+  margin-top: -6px;
+}
+.djg-credit:hover {
+  text-decoration: underline;
+}
+.djg-credit[hidden] {
+  display: none;
+}

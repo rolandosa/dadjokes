@@ -7,10 +7,12 @@ import { ULID_RE } from '@dadjokes/core/ids';
  * - TOP / <score>#<id>: a copy of each rated joke, sorted by score then age.
  * - STATS / STATS: running counts for the header.
  * - STATS / AI#<YYYY-MM-DD>: model calls that day, for the daily cap.
+ * - EXT / <key>: an external joke already told, so it is not told again.
  */
 export const FEED = 'FEED';
 export const TOP = 'TOP';
 export const STATS = 'STATS';
+export const EXT = 'EXT';
 
 function checkId(id: string): string {
   if (!ULID_RE.test(id)) throw new RangeError('joke id must be a ULID');

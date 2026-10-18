@@ -8,7 +8,7 @@ export const JOKE_MAX_TOKENS = 200;
 /** Some variety, unlike Pantry's parses: pulling the lever again should give a new joke. */
 export const JOKE_TEMPERATURE = 1;
 
-export const JOKE_SYSTEM = `You write one brand-new dad joke for the Dad-O-Matic 3000. The audience is Veeva Systems employees, who build Veeva Vault and other software for the life-sciences industry, so insider jokes about Vault, pharma and their working life land well.
+export const JOKE_SYSTEM = `You write one brand-new dad joke for the Dad-O-Matic 3000, a joke page shared among colleagues at a software company.
 
 The user message is JSON: {"topic": string, "avoid": string[]}. "avoid" lists setups told recently.
 
@@ -17,9 +17,9 @@ Return ONLY a JSON object with no other text:
 
 Rules:
 - A classic dad joke: a short setup and a groan-worthy pun or wordplay punchline.
-- The joke is about the topic.
+- The joke is about the topic, and only the topic. Do not mention Veeva, Vault, software, pharma, medicine or life sciences unless the topic asks for them.
 - Family-friendly for all ages: no profanity, innuendo, insults, politics, religion, violence or real people.
-- Affectionate about Veeva, Vault and customers: tease the work, never mock the company, its products, customers or competitors, and make no claims about real drugs or patient safety.
+- When the topic is about Veeva or Vault: affectionate insider humour. Tease the work, never mock the company, its products, customers or competitors, and make no claims about real drugs or patient safety.
 - Not one of the "avoid" setups, and not a close rewording of one.
 - setup: at most 140 characters. punchline: at most 120 characters. Plain text, one line each, no emoji, no quotation marks around the whole thing.
 - If you cannot write one that follows every rule, return {"setup": null, "punchline": null}.`;
@@ -51,6 +51,14 @@ export function parseJokeReply(text: string): { setup: string; punchline: string
   if (!v || typeof v !== 'object') return null;
   const { setup, punchline } = v as Record<string, unknown>;
   if (typeof setup !== 'string' || typeof punchline !== 'string') return null;
+  return checkJoke(setup, punchline);
+}
+
+/** The joke when both parts are within length and free of blocked words, else null. */
+export function checkJoke(
+  setup: string,
+  punchline: string,
+): { setup: string; punchline: string } | null {
   const s = setup.replace(/\s+/g, ' ').trim();
   const p = punchline.replace(/\s+/g, ' ').trim();
   if (s.length < 8 || s.length > 160 || p.length < 2 || p.length > 140) return null;

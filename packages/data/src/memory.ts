@@ -6,6 +6,7 @@ import type { Board, ToldJoke } from '@dadjokes/core/types';
 export function memoryRepo(): Repo {
   const jokes = new Map<string, ToldJoke>();
   const aiCalls = new Map<string, number>();
+  const usedExternal = new Set<string>();
   // DynamoRepo's STATS counters for encores.
   let bank = 0;
   let sinceReuse: number | undefined;
@@ -62,6 +63,11 @@ export function memoryRepo(): Repo {
         .sort((a, b) => (a.id < b.id ? 1 : -1))
         .slice(0, limit)
         .map((j) => j.setup);
+    },
+    async claimExternal(key: string) {
+      if (usedExternal.has(key)) return false;
+      usedExternal.add(key);
+      return true;
     },
     async bumpAiCalls(day: string) {
       const n = (aiCalls.get(day) ?? 0) + 1;

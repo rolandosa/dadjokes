@@ -18,6 +18,7 @@ beforeAll(() => {
     webDist: dist,
     jokeModel: 'us.anthropic.claude-sonnet-4-6',
     aiDailyCap: 500,
+    externalShare: 0.4,
   });
   template = Template.fromStack(stack);
 }, 120_000);
@@ -46,6 +47,7 @@ describe('DadJokesStack', () => {
     expect(f.Properties.Environment.Variables).toMatchObject({
       JOKE_MODEL: 'us.anthropic.claude-sonnet-4-6',
       AI_DAILY_CAP: '500',
+      EXTERNAL_SHARE: '0.4',
       STAGE: 'prod',
     });
     template.resourceCountIs('AWS::Lambda::Url', 1);

@@ -26,7 +26,7 @@ used by Pantry (provisioned 15 RCU / 25 WCU) and OurToDos (5/5).
 | `STATS` | `STATS`           | `told`, `rated`, `groans` (sum of scores), `bank`, `reused`, `sinceReuse` counters. |
 | `STATS` | `AI#<YYYY-MM-DD>` | Model calls that UTC day, for the daily cap.                                        |
 
-A joke row holds `id, key, category, setup, punchline, toldAt`, plus `level, score` once rated
+A joke row holds `id, key` (`<category>:<n>` library, `ai`, or `ext:<source>:<id>`), `category, setup, punchline, toldAt`, plus `level, score` once rated
 and `reusedFrom` (the original's id) when it is an encore.
 An unrated row has no `level`/`score` attributes (not NULLs); rating is conditional on
 `score` being absent, so a joke is rated at most once and the counters stay exact.
@@ -64,12 +64,29 @@ never two in a row and at most one in any ten consecutive jokes.
 - An encore is a new row (its own id and rating) with `reusedFrom` set; the page says
   "Encore!" when it shows one. Encores are never drawn as originals for another encore.
 
+## External jokes
+
+About 40% of new jokes (`EXTERNAL_SHARE`, CDK context `externalShare`, default 0.4) come from
+[icanhazdadjoke.com](https://icanhazdadjoke.com), a free public collection of dad jokes, instead
+of the model (`api/src/icanhazdadjoke.ts`, 2.5 s timeout, a User-Agent naming the project).
+
+- Classics use its random joke; Grill Talk, Lab Coat and Zoo Puns search one of the category's
+  words (`external` in `core/src/jokes.ts`), on a random page of results. Vault & Pharma has no
+  external source and is always written by the model.
+- `splitJoke` splits the one-string joke at the first `?`, else the first sentence end, and
+  applies the same length and word rules as model replies. Jokes that do not split are skipped.
+- Each external joke is told once: `EXT / ext:icanhazdadjoke:<id>` is written conditionally,
+  and a joke already claimed is skipped (encores aside). Stored with `key` `ext:...`; the page
+  shows a "via icanhazdadjoke.com" link under its punchline.
+- If the collection fails, times out or has nothing usable, the model writes the joke.
+
 ## Joke generation
 
 `core/src/prompts/joke.ts`, called through Bedrock's Converse API (`api/src/bedrock.ts`).
 
-- Audience: Veeva employees. The prompt says so, and the `vault` category's topic is Veeva Vault
-  and life-sciences work. Jokes stay affectionate: no mocking Veeva, customers or competitors,
+- Topic only: the prompt tells the model to stay on the category's topic and keep Veeva, Vault,
+  software and pharma out of it, except for the Vault & Pharma category, whose topic is insider
+  jokes for Veeva employees. Jokes stay affectionate: no mocking Veeva, customers or competitors,
   and no claims about real drugs or patient safety.
 - Model: `JOKE_MODEL`, from CDK context `jokeModel`, default `us.anthropic.claude-sonnet-4-6`
   (Sonnet 5 / 5.5 and Haiku 5.5 are not enabled on the account). Temperature 1, max 200 tokens.

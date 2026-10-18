@@ -1,11 +1,12 @@
 import { GIT_SHA, healthz, json, readBody, route, text, tooLarge } from '@dadjokes/core/http';
 import type { FnUrlEvent, FnUrlResult, RouteDef } from '@dadjokes/core/http';
 import { errName, log } from '@dadjokes/core/log';
-import type { Llm, Repo } from '@dadjokes/core/ports';
+import type { ExternalJokes, Llm, Repo } from '@dadjokes/core/ports';
 import { BadInput, Conflict, NotFound, board, newJoke, rateJoke } from '@dadjokes/core/service';
 import { DynamoRepo } from '@dadjokes/data/repo';
 import { sharedClient, tableName } from '@dadjokes/data/client';
 import { bedrockLlm } from './bedrock.js';
+import { icanhazdadjoke } from './icanhazdadjoke.js';
 
 /**
  * fn-api (SPEC "API"). Public: no login, no token. CloudFront serves it under the site's
@@ -39,6 +40,18 @@ const getLlm = (): Llm | null => (llm === undefined ? (llm = bedrockLlm()) : llm
 /** Model calls per UTC day before the lever falls back to library jokes (a cost backstop). */
 const dailyCap = (): number => Number(process.env.AI_DAILY_CAP ?? 500);
 
+let external: ExternalJokes | null | undefined;
+/** Swaps the external joke collection; null turns external jokes off. */
+export function setExternal(e: ExternalJokes | null): void {
+  external = e;
+}
+const getExternal = (): ExternalJokes | null =>
+  external === undefined ? (external = icanhazdadjoke()) : external;
+
+/** Share of new jokes taken from the external collection, 0 to 1 (SPEC "External jokes"). */
+const externalShare = (): number =>
+  Math.min(1, Math.max(0, Number(process.env.EXTERNAL_SHARE ?? 0.4)));
+
 function parse(event: FnUrlEvent): Record<string, unknown> {
   try {
     const v: unknown = JSON.parse(readBody(event) || '{}');
@@ -56,6 +69,8 @@ async function dispatch(event: FnUrlEvent, name: string, params: Record<string, 
     case 'new': {
       const { joke, source } = await newJoke(getRepo(), getLlm(), parse(event).category, {
         dailyCap: dailyCap(),
+        external: getExternal(),
+        externalShare: externalShare(),
       });
       log({ fn: 'api', outcome: `joke-${source}` });
       return json(201, joke, NO_STORE);

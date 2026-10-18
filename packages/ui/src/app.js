@@ -212,6 +212,15 @@ export function mountDadOMatic(element, backend) {
   const bubble = el('div', { class: 'djg-bubble' }, setupText, caret);
   const drum = el('div', { class: 'djg-drumroll', text: '🥁 drrrrrrrrrrrr...' });
   const punch = el('div', { class: 'djg-punch' });
+  // External jokes credit their source (SPEC "External jokes").
+  const credit = el('a', {
+    class: 'djg-credit',
+    href: 'https://icanhazdadjoke.com',
+    target: '_blank',
+    rel: 'noopener',
+    hidden: '',
+    text: '📚 via icanhazdadjoke.com',
+  });
   const reveal = el('button', {
     class: 'djg-reveal',
     type: 'button',
@@ -227,7 +236,16 @@ export function mountDadOMatic(element, backend) {
   });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
   const dadHolder = createDad();
-  const bubbles = el('div', { class: 'djg-bubbles' }, bubble, reveal, drum, punch, miniPull);
+  const bubbles = el(
+    'div',
+    { class: 'djg-bubbles' },
+    bubble,
+    reveal,
+    drum,
+    punch,
+    credit,
+    miniPull,
+  );
   const theatre = el(
     'section',
     { class: 'djg-panel' },
@@ -461,6 +479,7 @@ export function mountDadOMatic(element, backend) {
     root.classList.remove('is-drumroll');
 
     punch.textContent = joke.punchline;
+    credit.hidden = !String(joke.key ?? '').startsWith('ext:');
     void punch.offsetWidth; // restart the slam animation
     punch.classList.add('show');
     badum.classList.add('show');

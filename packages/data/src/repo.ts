@@ -4,6 +4,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import {
   GetCommand,
+  PutCommand,
   QueryCommand,
   TransactWriteCommand,
   UpdateCommand,
@@ -12,7 +13,7 @@ import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type { GroanLevel } from '@dadjokes/core/jokes';
 import type { Repo } from '@dadjokes/core/ports';
 import type { Board, ToldJoke } from '@dadjokes/core/types';
-import { FEED, STATS, TOP, aiCallsSk, feedSk, topSk } from './keys.js';
+import { EXT, FEED, STATS, TOP, aiCallsSk, feedSk, topSk } from './keys.js';
 
 const JOKE_FIELDS = [
   'id',
@@ -205,6 +206,23 @@ export class DynamoRepo implements Repo {
       }),
     );
     return (out.Items ?? []).map((i) => String(i.setup));
+  }
+
+  async claimExternal(key: string): Promise<boolean> {
+    if (!/^ext:[a-z]+:[\w-]{1,64}$/.test(key)) throw new RangeError('bad external key');
+    try {
+      await this.db.send(
+        new PutCommand({
+          TableName: this.table,
+          Item: { PK: EXT, SK: key },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        }),
+      );
+      return true;
+    } catch (err) {
+      if (err instanceof ConditionalCheckFailedException) return false;
+      throw err;
+    }
   }
 
   async bumpAiCalls(day: string): Promise<number> {

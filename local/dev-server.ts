@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { FnUrlEvent, FnUrlResult } from '@dadjokes/core/http';
 import { nodeToEvent, writeResult } from '@dadjokes/core/http/node';
 import type { Llm } from '@dadjokes/core/ports';
-import { handler, setLlm, setRepo } from '@dadjokes/api';
+import { handler, setExternal, setLlm, setRepo } from '@dadjokes/api';
 import { memoryRepo } from '@dadjokes/data/memory';
 
 /**
@@ -39,6 +39,22 @@ function fixtureWriter(): Llm {
       return replies[n++ % replies.length]!;
     },
   };
+}
+
+if (process.env.EXTERNAL_MODE !== 'live') {
+  // Canned external jokes; EXTERNAL_MODE=live calls icanhazdadjoke.com.
+  let n = 0;
+  setExternal({
+    async find() {
+      n += 1;
+      return [
+        {
+          id: `fixture${n}`,
+          text: `Why did external joke ${n} cross the road? To get to the other site.`,
+        },
+      ];
+    },
+  });
 }
 
 function serve(port: number, name: string, handle: (e: FnUrlEvent) => Promise<FnUrlResult>) {

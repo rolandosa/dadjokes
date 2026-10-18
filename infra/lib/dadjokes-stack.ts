@@ -27,6 +27,8 @@ export interface DadJokesStackProps extends StackProps {
   jokeModel: string;
   /** Model calls per UTC day before jokes come from the library instead (a cost backstop). */
   aiDailyCap: number;
+  /** Share of new jokes taken from icanhazdadjoke.com, 0 to 1. */
+  externalShare: number;
 }
 
 /**
@@ -74,6 +76,7 @@ export class DadJokesStack extends Stack {
         GIT_SHA: props.gitSha,
         JOKE_MODEL: props.jokeModel,
         AI_DAILY_CAP: String(props.aiDailyCap),
+        EXTERNAL_SHARE: String(props.externalShare),
       },
       bundling: {
         minify: true,

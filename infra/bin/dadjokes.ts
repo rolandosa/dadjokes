@@ -27,4 +27,5 @@ new DadJokesStack(app, 'DadJokes', {
   webDist,
   jokeModel: ctx('jokeModel') ?? DEFAULT_JOKE_MODEL,
   aiDailyCap: Number(ctx('aiDailyCap') ?? 500),
+  externalShare: Number(ctx('externalShare') ?? 0.4),
 });

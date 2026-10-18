@@ -13,8 +13,9 @@ The same page also runs inside Veeva Vault as a Custom Page, storing jokes as Va
 
 ## What it does
 
-- **New jokes every time.** Sonnet 4.6 (Bedrock) writes each joke on a topic from the picked
-  category, avoiding the last 20 told. If the model fails, writes something off-limits, or the
+- **New jokes every time.** About 40% come from [icanhazdadjoke.com](https://icanhazdadjoke.com)
+  (each used once, credited on the page); Sonnet 4.6 (Bedrock) writes the rest on the picked
+  category's topic, avoiding the last 20 told. Only Vault & Pharma talks about Veeva. If the model fails, writes something off-limits, or the
   daily cap of 500 calls is reached, Dad falls back to the built-in library.
 - **Encores.** Once more than 200 jokes are stored, Dad may repeat a well-rated one, but never
   two in a row and at most one in any ten.

@@ -1,7 +1,8 @@
 import { ULID_RE, ulid, ulidFloor, ulidTime } from './ids.js';
 import { CATEGORIES, CATEGORY_KEYS, generateJoke, isCategory, levelByKey } from './jokes.js';
 import type { CategoryKey } from './jokes.js';
-import type { Llm, Repo } from './ports.js';
+import { externalKey, splitJoke } from './external.js';
+import type { ExternalJokes, Llm, Repo } from './ports.js';
 import { JOKE_SYSTEM, jokeUserMessage, parseJokeReply } from './prompts/joke.js';
 import type { Board, ToldJoke } from './types.js';
 
@@ -68,13 +69,59 @@ async function pickEncore(
 export interface NewJokeOptions {
   /** Model calls allowed per UTC day; past it, jokes come from the library. */
   dailyCap: number;
+  /** The external collection, and the share of new jokes to take from it (0 to 1). */
+  external?: ExternalJokes | null;
+  externalShare?: number;
   now?: Date;
   random?: () => number;
 }
 
 /** Where a joke came from (an encore, the model, or the library and why), for the log line. */
 export type JokeSource =
-  'encore' | 'ai' | 'library-no-llm' | 'library-cap' | 'library-bad-reply' | 'library-llm-error';
+  | 'encore'
+  | 'external'
+  | 'ai'
+  | 'library-no-llm'
+  | 'library-cap'
+  | 'library-bad-reply'
+  | 'library-llm-error';
+
+/** How many external jokes one pull looks at, at most, before giving up on the collection. */
+const EXTERNAL_TRIES = 5;
+
+/**
+ * An unused external joke for the category, claimed so it is not told again; null when the
+ * collection fails, finds nothing usable, or every candidate was already told.
+ */
+async function fromExternal(
+  repo: Repo,
+  external: ExternalJokes,
+  source: 'random' | readonly string[],
+  avoid: ReadonlySet<string>,
+  random: () => number,
+): Promise<{ key: string; setup: string; punchline: string } | null> {
+  let tries = 0;
+  // A random joke comes one per call; a search returns a page to pick from.
+  for (let call = 0; call < (source === 'random' ? EXTERNAL_TRIES : 1); call++) {
+    const term = source === 'random' ? null : source[Math.floor(random() * source.length)]!;
+    let found;
+    try {
+      found = await external.find(term);
+    } catch {
+      return null;
+    }
+    const shuffled = [...found].sort(() => random() - 0.5);
+    for (const candidate of shuffled) {
+      if (tries >= EXTERNAL_TRIES) return null;
+      const joke = splitJoke(candidate.text);
+      if (!joke || avoid.has(joke.setup)) continue;
+      tries += 1;
+      const key = externalKey(candidate.id);
+      if (await repo.claimExternal(key)) return { key, ...joke };
+    }
+  }
+  return null;
+}
 
 /**
  * Tells a joke and stores it. When the encore slot is open it repeats a stored joke;
@@ -115,6 +162,24 @@ export async function newJoke(
       return { joke: encore, source: 'encore' };
     }
     // No fitting joke found: the slot was spent, and a new joke is told instead.
+  }
+
+  const externalSource = CATEGORIES[pick].external;
+  if (opts.external && externalSource && random() < (opts.externalShare ?? 0)) {
+    const found = await fromExternal(repo, opts.external, externalSource, new Set(recent), random);
+    if (found) {
+      const joke: ToldJoke = {
+        id: ulid(),
+        ...found,
+        category: pick,
+        level: null,
+        score: null,
+        toldAt,
+        reusedFrom: null,
+      };
+      await repo.addJoke(joke);
+      return { joke, source: 'external' };
+    }
   }
 
   let source: JokeSource = 'library-no-llm';

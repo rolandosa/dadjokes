@@ -13,6 +13,11 @@ export interface Category {
   icon: string;
   /** What the joke-writing prompt is asked to write about. */
   topic: string;
+  /**
+   * Where external jokes for this category come from: 'random' for any joke, search words to
+   * pick from, or null when the external collection has nothing for it (SPEC "External jokes").
+   */
+  external: 'random' | readonly string[] | null;
   jokes: ReadonlyArray<readonly [setup: string, punchline: string]>;
 }
 
@@ -26,6 +31,7 @@ export interface Joke {
 export const CATEGORIES: Record<CategoryKey, Category> = {
   classic: {
     topic: 'anything at all: everyday life, home, school, work or hobbies',
+    external: 'random',
     label: 'Classics',
     icon: '👔',
     jokes: [
@@ -48,6 +54,18 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
   },
   food: {
     topic: 'food, cooking, grilling and the kitchen',
+    external: [
+      'food',
+      'cheese',
+      'pizza',
+      'coffee',
+      'bread',
+      'egg',
+      'cook',
+      'potato',
+      'cake',
+      'soup',
+    ],
     label: 'Grill Talk',
     icon: '🍔',
     jokes: [
@@ -73,6 +91,7 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
   },
   science: {
     topic: 'science, maths, space and the lab',
+    external: ['science', 'math', 'atom', 'space', 'moon', 'chemistry', 'physics', 'number'],
     label: 'Lab Coat',
     icon: '🧪',
     jokes: [
@@ -99,9 +118,10 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
   },
   vault: {
     topic:
-      'Veeva Vault and life-sciences work: documents and versions, lifecycles and workflows, ' +
-      'MLR review and claims, regulatory submissions, clinical trials, quality and audits, ' +
-      'pharma sales reps and pharmacies',
+      'insider jokes for Veeva employees about Veeva Vault and life-sciences work: documents ' +
+      'and versions, lifecycles and workflows, MLR review and claims, regulatory submissions, ' +
+      'clinical trials, quality and audits, pharma sales reps and pharmacies',
+    external: null,
     label: 'Vault & Pharma',
     icon: '🗄️',
     jokes: [
@@ -130,6 +150,7 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
   },
   animals: {
     topic: 'animals',
+    external: ['dog', 'cat', 'cow', 'fish', 'bear', 'bird', 'horse', 'pig', 'duck', 'sheep'],
     label: 'Zoo Puns',
     icon: '🐻',
     jokes: [

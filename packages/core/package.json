@@ -11,6 +11,7 @@
     "./service": "./src/service.ts",
     "./ids": "./src/ids.ts",
     "./prompts/joke": "./src/prompts/joke.ts",
+    "./external": "./src/external.ts",
     "./log": "./src/log.ts",
     "./http": "./src/http/event.ts",
     "./http/node": "./src/http/node.ts"
