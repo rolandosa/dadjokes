@@ -19,14 +19,15 @@ One DynamoDB table, `dadjokes`, keys only (`PK`, `SK`), no index. On-demand bill
 50 read / 20 write request units per second: the account's always-free 25 WCU are already
 used by Pantry (provisioned 15 RCU / 25 WCU) and OurToDos (5/5).
 
-| PK      | SK                | What                                                      |
-| ------- | ----------------- | --------------------------------------------------------- |
-| `FEED`  | `J#<ulid>`        | Every told joke. ULIDs sort by time, so newest is last.   |
-| `TOP`   | `<score>#<ulid>`  | A copy of each rated joke, so a reverse query ranks them. |
-| `STATS` | `STATS`           | `told`, `rated`, `groans` (sum of scores) counters.       |
-| `STATS` | `AI#<YYYY-MM-DD>` | Model calls that UTC day, for the daily cap.              |
+| PK      | SK                | What                                                                                |
+| ------- | ----------------- | ----------------------------------------------------------------------------------- |
+| `FEED`  | `J#<ulid>`        | Every told joke. ULIDs sort by time, so newest is last.                             |
+| `TOP`   | `<score>#<ulid>`  | A copy of each rated joke, so a reverse query ranks them.                           |
+| `STATS` | `STATS`           | `told`, `rated`, `groans` (sum of scores), `bank`, `reused`, `sinceReuse` counters. |
+| `STATS` | `AI#<YYYY-MM-DD>` | Model calls that UTC day, for the daily cap.                                        |
 
-A joke row holds `id, key, category, setup, punchline, toldAt`, plus `level, score` once rated.
+A joke row holds `id, key, category, setup, punchline, toldAt`, plus `level, score` once rated
+and `reusedFrom` (the original's id) when it is an encore.
 An unrated row has no `level`/`score` attributes (not NULLs); rating is conditional on
 `score` being absent, so a joke is rated at most once and the counters stay exact.
 
@@ -39,13 +40,29 @@ An unrated row has no `level`/`score` attributes (not NULLs); rating is conditio
   category's topic, avoiding the 20 most recent setups, validates the reply and stores it with
   `key: 'ai'`. It falls back to an untold library joke when there is no model, the cap is
   passed, the call throws or the reply breaks the rules. The source is logged as
-  `joke-ai`, `joke-library-cap`, `joke-library-bad-reply`, `joke-library-llm-error` or
+  `joke-encore`, `joke-ai`, `joke-library-cap`, `joke-library-bad-reply`, `joke-library-llm-error` or
   `joke-library-no-llm`.
 - `rateJoke(repo, id, level)`: `NotFound` for an unknown id, `BadInput` for an unknown level,
   `Conflict` when already rated.
 - `board(repo)`: the 8 top-rated jokes, the 8 newest, and the stats.
 
 Joke text never comes from a request: it is written by the model or taken from the library.
+
+## Encores
+
+Once the bank (original jokes stored, `STATS.bank`) holds more than 200 jokes, a stored joke
+may be told again. After an encore, 9 originals must be told before the next one, so there are
+never two in a row and at most one in any ten consecutive jokes.
+
+- The slot is taken atomically (`claimReuse`): a conditional update sets `sinceReuse` to 0 only
+  when `bank > 200` and `sinceReuse >= 9` (or is absent). Each original adds 1 to `bank` and
+  `sinceReuse`; an encore adds 1 to `told` and `reused`.
+- The joke: from a random point in the bank's history, up to 3 draws of 25 neighbouring
+  originals; it takes the best-rated one that fits the asked category (any, for "Surprise me")
+  and is not among the last 20 setups told. If no draw finds one, the slot is spent and a new
+  joke is told.
+- An encore is a new row (its own id and rating) with `reusedFrom` set; the page says
+  "Encore!" when it shows one. Encores are never drawn as originals for another encore.
 
 ## Joke generation
 
