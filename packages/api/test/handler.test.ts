@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { FnUrlEvent } from '@dadjokes/core/http';
 import { memoryRepo } from '@dadjokes/data/memory';
-import { handler, setLlm, setRepo } from '../src/handler.js';
+import { handler, setExternal, setLlm, setRepo } from '../src/handler.js';
 
 function ev(method: string, path: string, body?: unknown): FnUrlEvent {
   return {
@@ -17,6 +17,8 @@ function ev(method: string, path: string, body?: unknown): FnUrlEvent {
 
 beforeEach(() => {
   setRepo(memoryRepo());
+  // Never the real icanhazdadjoke.com in tests: the joke must come from the fake writer below.
+  setExternal(null);
   setLlm({
     async joke() {
       return '{"setup": "What do you call a sleeping bull?", "punchline": "A bulldozer."}';
