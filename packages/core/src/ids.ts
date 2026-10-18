@@ -1,4 +1,4 @@
-import { decodeTime, encodeTime, ulid as rawUlid } from 'ulid';
+import { decodeTime, encodeTime, monotonicFactory } from 'ulid';
 
 /**
  * Crockford base32 ULID shape: 26 chars, no I/L/O/U. It contains no '#', which
@@ -7,9 +7,15 @@ import { decodeTime, encodeTime, ulid as rawUlid } from 'ulid';
  */
 export const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
+/**
+ * Monotonic: ids minted in the same millisecond still increase, so "newest first" by id is
+ * exact even when two jokes are told at once.
+ */
+const nextUlid = monotonicFactory();
+
 /** Time-sortable 26-char id: told jokes sort newest-first by id alone. */
 export function ulid(): string {
-  return rawUlid();
+  return nextUlid();
 }
 
 /** The smallest ULID for millisecond `ms`: every id minted at or after `ms` sorts at or above it. */

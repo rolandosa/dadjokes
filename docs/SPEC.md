@@ -58,7 +58,7 @@ never two in a row and at most one in any ten consecutive jokes.
   when `bank > 200` and `sinceReuse >= 9` (or is absent). Each original adds 1 to `bank` and
   `sinceReuse`; an encore adds 1 to `told` and `reused`.
 - The joke: from a random point in the bank's history, up to 3 draws of 25 neighbouring
-  originals; it takes the best-rated one that fits the asked category (any, for "Surprise me")
+  originals, then one from the oldest jokes; it takes the best-rated one that fits the asked category (any, for "Surprise me")
   and is not among the last 20 setups told. If no draw finds one, the slot is spent and a new
   joke is told.
 - An encore is a new row (its own id and rating) with `reusedFrom` set; the page says

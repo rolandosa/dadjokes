@@ -130,3 +130,11 @@ describe('parseJokeReply', () => {
     expect(parseJokeReply(JSON.stringify({ setup: 'x'.repeat(200), punchline: 'y' }))).toBeNull();
   });
 });
+
+describe('ids', () => {
+  it('increase even within one millisecond', async () => {
+    const { ulid } = await import('../src/ids.js');
+    const ids = Array.from({ length: 50 }, () => ulid());
+    expect([...ids].sort()).toEqual(ids);
+  });
+});

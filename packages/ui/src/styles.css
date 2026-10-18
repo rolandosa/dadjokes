@@ -873,8 +873,8 @@
     font-size: 18px;
     margin-top: 8px;
   }
-  /* The meter panel keeps just the gauge on phones. */
-  .djg-meter .djg-meter-grid {
-    grid-template-columns: 1fr;
+  /* The rating moved under the punchline, so the Groan-o-Meter panel has nothing left to do. */
+  .djg-meter {
+    display: none;
   }
 }

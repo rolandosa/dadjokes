@@ -29,7 +29,11 @@ const AVOID_COUNT = 20;
 export const REUSE_MIN_BANK = 200;
 export const REUSE_GAP = 9;
 
-/** How many neighbouring bank jokes one encore draw looks at, and how many draws it tries. */
+/**
+ * How many neighbouring bank jokes one encore draw looks at, and how many random draws it
+ * tries before a last draw from the oldest jokes (random points near "now" land among the
+ * recent jokes it must avoid).
+ */
 const DRAW_SIZE = 25;
 const DRAWS = 3;
 
@@ -48,8 +52,8 @@ async function pickEncore(
   const oldest = await repo.oldestId();
   if (!oldest) return null;
   const from = ulidTime(oldest);
-  for (let i = 0; i < DRAWS; i++) {
-    const at = from + Math.floor(random() * Math.max(1, now.getTime() - from));
+  for (let i = 0; i <= DRAWS; i++) {
+    const at = i === DRAWS ? from : from + Math.floor(random() * Math.max(1, now.getTime() - from));
     const fits = (await repo.originalsFrom(ulidFloor(at), DRAW_SIZE)).filter(
       (j) => !avoid.has(j.setup) && (anyCategory || j.category === category),
     );
