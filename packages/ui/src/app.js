@@ -48,7 +48,7 @@ function gaugeSvg() {
   </svg>`;
 }
 
-// The layer goes inside the page root, so the page's styles and teardown cover it.
+// The layer goes inside the page root so it still shows when the root is fullscreen.
 function confetti(host, emojis, count = 40) {
   const layer = el('div', { class: 'djg-confetti' });
   host.appendChild(layer);
@@ -98,11 +98,47 @@ function jokeItem(rec, lead) {
 }
 
 /**
+ * A Fullscreen button, on its own row above the banner. Uses the browser's fullscreen when the
+ * host allows it, else fills the window; Esc exits either way.
+ */
+function fullscreenToggle(root) {
+  const isFull = () =>
+    document.fullscreenElement === root || root.classList.contains('is-maximized');
+  const sync = () => {
+    btn.textContent = isFull() ? '✕ Exit fullscreen' : '⛶ Fullscreen';
+    btn.setAttribute('aria-pressed', String(isFull()));
+  };
+  const toggle = async () => {
+    if (document.fullscreenElement === root) await document.exitFullscreen();
+    else if (root.classList.contains('is-maximized')) root.classList.remove('is-maximized');
+    else {
+      try {
+        await root.requestFullscreen();
+      } catch {
+        root.classList.add('is-maximized');
+      }
+    }
+    sync();
+  };
+  const btn = el('button', { class: 'djg-fullscreen', type: 'button', onclick: toggle });
+  sync();
+  document.addEventListener('fullscreenchange', sync);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && root.classList.contains('is-maximized')) {
+      root.classList.remove('is-maximized');
+      sync();
+    }
+  });
+  return el('div', { class: 'djg-toolbar' }, btn);
+}
+
+/**
  * Mounts the Dad-O-Matic into `element`. The backend stores jokes and ratings:
  *   nextJoke(category) -> Promise<ToldJoke> when the backend writes and stores jokes itself,
  *   or saveJoke(joke) -> Promise<id> to store one picked here from the library;
  *   rateJoke(id, level) -> Promise, loadBoard() -> Promise<Board>,
- *   place: where jokes are filed ("Vault", "the cloud"), tagline: the line under the lever.
+ *   place: where jokes are filed ("Vault", "the cloud"), tagline: the line under the lever,
+ *   fullscreen: true to offer a Fullscreen button (the Vault page; the public site has none).
  * Board rows are { setup, punchline, category, level } (core/types ToldJoke).
  */
 export function mountDadOMatic(element, backend) {
@@ -133,6 +169,8 @@ export function mountDadOMatic(element, backend) {
   const statTold = el('b', { text: '–' });
   const statRated = el('b', { text: '–' });
   const statAvg = el('b', { text: '–' });
+  if (backend.fullscreen) wrap.appendChild(fullscreenToggle(root));
+
   const bulbStrip = (edge) => {
     const strip = el('div', { class: `djg-bulbs ${edge}` });
     for (let i = 0; i < 60; i++) strip.appendChild(el('i'));

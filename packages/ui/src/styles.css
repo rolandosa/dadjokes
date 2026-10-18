@@ -66,6 +66,55 @@
 }
 
 /* Marquee header */
+/* Fullscreen (Vault page only, backend.fullscreen). */
+.djg:fullscreen,
+.djg.is-maximized {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+.djg:fullscreen .dad,
+.djg.is-maximized .dad {
+  width: 300px;
+}
+.djg:fullscreen .djg-theatre,
+.djg.is-maximized .djg-theatre {
+  grid-template-columns: 300px 1fr;
+  min-height: 400px;
+}
+@media (max-width: 560px) {
+  .djg:fullscreen .djg-theatre,
+  .djg.is-maximized .djg-theatre {
+    grid-template-columns: 1fr;
+  }
+  .djg:fullscreen .dad,
+  .djg.is-maximized .dad {
+    width: 240px;
+  }
+}
+.djg-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.djg-fullscreen {
+  font:
+    900 13px 'Nunito',
+    sans-serif;
+  color: var(--ink);
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.djg-fullscreen:hover {
+  background: var(--sun);
+}
+
 .djg-marquee {
   position: relative;
   text-align: center;

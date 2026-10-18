@@ -10,5 +10,6 @@ export default definePage(({ element }) => {
     loadBoard,
     place: 'Vault',
     tagline: 'Every joke is filed in Vault. For posterity. And compliance.',
+    fullscreen: true,
   });
 });
