@@ -1,4 +1,14 @@
+*.tsbuildinfo
 node_modules/
-client/dist/
+dist/
+cdk.out/
+local/.data/
+local/.env.local
+.env
+.env.*
+!.env.example
+coverage/
+*.log
+.DS_Store
 *.zip
 preview/*.png

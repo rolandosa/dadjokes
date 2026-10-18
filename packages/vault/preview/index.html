@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dad-O-Matic Preview</title>
+  <style>body { margin: 0; background: #f4f4f4; } .vault-nav { height: 48px; background: #233a5e; color: #fff; font: 600 15px system-ui; display: flex; align-items: center; padding: 0 16px; }</style>
+</head>
+<body>
+  <div class="vault-nav">Vault (local preview — data is kept in memory)</div>
+  <div id="page"></div>
+  <script>
+    // Stand-in for the Vault runtime: an in-memory dad_joke__c table behind a fake Vault API.
+    const rows = [];
+    let seq = 0;
+    const json = (body) => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+    const seen = new Set();
+    function runQuery(q) {
+      // Like Vault, flag a repeated identical query with a WARNING (the data still comes back).
+      const status = seen.has(q) ? 'WARNING' : 'SUCCESS';
+      seen.add(q);
+      let data = rows.slice();
+      if (/groan_score__c >= 1/.test(q)) data = data.filter((r) => r.groan_score__c >= 1).sort((a, b) => b.groan_score__c - a.groan_score__c || b.seq - a.seq);
+      else if (/ORDER BY created_date__v DESC/.test(q)) data.sort((a, b) => b.seq - a.seq);
+      const size = Number((q.match(/PAGESIZE (\d+)/) || [])[1] || 1000);
+      return { responseStatus: status, responseDetails: { total: data.length }, data: data.slice(0, size) };
+    }
+    window.__vaultMeta = {};
+    window.__vaultModuleV5 = {
+      definePage: (init) => init,
+      vaultApiClient: {
+        async fetch(path, init = {}) {
+          await new Promise((r) => setTimeout(r, 120));
+          if (path.endsWith('/query')) return json(runQuery(new URLSearchParams(init.body).get('q')));
+          const recs = JSON.parse(init.body);
+          if (init.method === 'POST') {
+            return json({ responseStatus: 'SUCCESS', data: recs.map((r) => {
+              const row = { ...r, id: `V0X${String(++seq).padStart(6, '0')}`, seq, groan_level__c: null, groan_score__c: null, created_date__v: new Date().toISOString() };
+              rows.push(row);
+              return { responseStatus: 'SUCCESS', data: { id: row.id } };
+            }) });
+          }
+          return json({ responseStatus: 'SUCCESS', data: recs.map((r) => {
+            const row = rows.find((x) => x.id === r.id);
+            Object.assign(row, r, { groan_level__c: [r.groan_level__c] });
+            return { responseStatus: 'SUCCESS', data: { id: row.id } };
+          }) });
+        },
+      },
+    };
+  </script>
+  <script type="module">
+    const { default: init } = await import('../dist/dad-jokes.js');
+    init({ element: document.getElementById('page'), data: {}, pageContext: { reload() {} }, sendEvent: async () => ({}) });
+  </script>
+</body>
+</html>

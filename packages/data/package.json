@@ -1,0 +1,19 @@
+{
+  "name": "@dadjokes/data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./keys": "./src/keys.ts",
+    "./repo": "./src/repo.ts",
+    "./memory": "./src/memory.ts",
+    "./table-def": "./src/table-def.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1137.0",
+    "@aws-sdk/lib-dynamodb": "3.1137.0",
+    "@dadjokes/core": "workspace:*"
+  }
+}

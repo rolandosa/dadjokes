@@ -1,0 +1,9 @@
+# DynamoDB Local on :8000. Pantry and OurToDos run the same
+# container on the same port: if one is already up, skip this one; the
+# `todo` table lives beside Pantry's in that shared database.
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: '-jar DynamoDBLocal.jar -sharedDb -dbPath /data'
+    ports: ['8000:8000']
+    volumes: ['./.data/dynamodb:/data']

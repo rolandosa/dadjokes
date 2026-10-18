@@ -1,0 +1,21 @@
+{
+  "name": "@dadjokes/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jokes": "./src/jokes.ts",
+    "./types": "./src/types.ts",
+    "./ports": "./src/ports.ts",
+    "./service": "./src/service.ts",
+    "./ids": "./src/ids.ts",
+    "./prompts/joke": "./src/prompts/joke.ts",
+    "./log": "./src/log.ts",
+    "./http": "./src/http/event.ts",
+    "./http/node": "./src/http/node.ts"
+  },
+  "dependencies": {
+    "ulid": "3.0.2"
+  }
+}

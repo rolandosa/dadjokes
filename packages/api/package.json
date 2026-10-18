@@ -1,0 +1,14 @@
+{
+  "name": "@dadjokes/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/handler.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "3.1137.0",
+    "@dadjokes/core": "workspace:*",
+    "@dadjokes/data": "workspace:*"
+  }
+}
