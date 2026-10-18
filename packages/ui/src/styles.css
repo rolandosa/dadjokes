@@ -66,80 +66,46 @@
 }
 
 /* Marquee header */
-.djg:fullscreen,
-.djg.is-maximized {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483000;
-  min-height: 100vh;
-  overflow-y: auto;
-  padding-top: 32px;
-}
-.djg:fullscreen .dad,
-.djg.is-maximized .dad {
-  width: 300px;
-}
-.djg:fullscreen .djg-theatre,
-.djg.is-maximized .djg-theatre {
-  grid-template-columns: 300px 1fr;
-  min-height: 400px;
-}
-@media (max-width: 560px) {
-  .djg:fullscreen .djg-theatre,
-  .djg.is-maximized .djg-theatre {
-    grid-template-columns: 1fr;
-  }
-  .djg:fullscreen .dad,
-  .djg.is-maximized .dad {
-    width: 240px;
-  }
-}
-.djg-fullscreen {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  z-index: 2;
-  font:
-    900 13px 'Nunito',
-    sans-serif;
-  color: var(--ink);
-  background: var(--cream);
-  border: 3px solid var(--ink);
-  border-radius: 999px;
-  padding: 4px 12px;
-  cursor: pointer;
-  box-shadow: 0 3px 0 var(--ink);
-}
-.djg-fullscreen:hover {
-  background: var(--sun);
-}
-@media (max-width: 560px) {
-  .djg-fullscreen {
-    position: static;
-    margin-bottom: 6px;
-  }
-}
-
 .djg-marquee {
   position: relative;
   text-align: center;
-  padding: 18px 20px 14px;
+  /* Room for the bulb strips along the top and bottom edges. */
+  padding: 36px 20px 36px;
   margin-bottom: 20px;
   background: var(--cherry);
   border: 6px solid var(--ink);
   border-radius: 22px;
   box-shadow: 0 8px 0 var(--ink);
 }
+/* One row of bulbs along each edge, never over the text: extra bulbs are clipped, not wrapped. */
 .djg-bulbs {
   position: absolute;
-  inset: 6px;
+  left: 14px;
+  right: 14px;
+  height: 14px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-content: space-between;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
   pointer-events: none;
+  /* Fade the ends so a clipped bulb never shows as a half circle. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent
+  );
+}
+.djg-bulbs.top {
+  top: 10px;
+}
+.djg-bulbs.bottom {
+  bottom: 10px;
 }
 .djg-bulbs i {
+  flex: none;
+  margin-top: 1px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -229,7 +195,7 @@
     padding-top: 12px;
   }
   .djg-marquee {
-    padding: 10px 12px;
+    padding: 32px 12px;
     margin-bottom: 12px;
   }
   .djg-theatre {

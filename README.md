@@ -27,7 +27,6 @@ The same page also runs inside Veeva Vault as a Custom Page, storing jokes as Va
   | 5     | 🚪 Left the Room | The highest honour a dad can receive.      |
 
 - **Hall of Groans** (top-rated) and **Fresh Off the Grill** (latest), shared by everyone.
-- **Fullscreen** from the ⛶ button; Esc exits.
 
 ## Layout
 

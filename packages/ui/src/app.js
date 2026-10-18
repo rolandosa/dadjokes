@@ -48,7 +48,7 @@ function gaugeSvg() {
   </svg>`;
 }
 
-// The layer goes inside the page root so it still shows when the root is fullscreen.
+// The layer goes inside the page root, so the page's styles and teardown cover it.
 function confetti(host, emojis, count = 40) {
   const layer = el('div', { class: 'djg-confetti' });
   host.appendChild(layer);
@@ -133,47 +133,17 @@ export function mountDadOMatic(element, backend) {
   const statTold = el('b', { text: '–' });
   const statRated = el('b', { text: '–' });
   const statAvg = el('b', { text: '–' });
-  // Fullscreen: use the browser's fullscreen when the host allows it, else fill the window.
-  const isFull = () =>
-    document.fullscreenElement === root || root.classList.contains('is-maximized');
-  const syncFullscreenBtn = () => {
-    fullscreenBtn.textContent = isFull() ? '✕ Exit fullscreen' : '⛶ Fullscreen';
-    fullscreenBtn.setAttribute('aria-pressed', String(isFull()));
+  const bulbStrip = (edge) => {
+    const strip = el('div', { class: `djg-bulbs ${edge}` });
+    for (let i = 0; i < 60; i++) strip.appendChild(el('i'));
+    return strip;
   };
-  const toggleFullscreen = async () => {
-    if (document.fullscreenElement === root) await document.exitFullscreen();
-    else if (root.classList.contains('is-maximized')) root.classList.remove('is-maximized');
-    else {
-      try {
-        await root.requestFullscreen();
-      } catch {
-        root.classList.add('is-maximized');
-      }
-    }
-    syncFullscreenBtn();
-  };
-  const fullscreenBtn = el('button', {
-    class: 'djg-fullscreen',
-    type: 'button',
-    onclick: toggleFullscreen,
-  });
-  syncFullscreenBtn();
-  document.addEventListener('fullscreenchange', syncFullscreenBtn);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && root.classList.contains('is-maximized')) {
-      root.classList.remove('is-maximized');
-      syncFullscreenBtn();
-    }
-  });
-
-  const bulbs = el('div', { class: 'djg-bulbs' });
-  for (let i = 0; i < 40; i++) bulbs.appendChild(el('i'));
   wrap.appendChild(
     el(
       'header',
       { class: 'djg-marquee' },
-      bulbs,
-      fullscreenBtn,
+      bulbStrip('top'),
+      bulbStrip('bottom'),
       el('h1', { class: 'djg-title', text: 'DAD-O-MATIC 3000' }),
       el('p', { class: 'djg-sub', text: 'Industrial-grade puns. Rated by the Groan-o-Meter™.' }),
       el(
