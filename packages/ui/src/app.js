@@ -227,16 +227,11 @@ export function mountDadOMatic(element, backend) {
   });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
   const dadHolder = createDad();
+  const bubbles = el('div', { class: 'djg-bubbles' }, bubble, reveal, drum, punch, miniPull);
   const theatre = el(
     'section',
     { class: 'djg-panel' },
-    el(
-      'div',
-      { class: 'djg-theatre' },
-      dadHolder,
-      el('div', { class: 'djg-bubbles' }, bubble, reveal, drum, punch, miniPull),
-      badum,
-    ),
+    el('div', { class: 'djg-theatre' }, dadHolder, bubbles, badum),
   );
 
   // Machine
@@ -304,19 +299,32 @@ export function mountDadOMatic(element, backend) {
       el('span', { text: l.label }),
     ),
   );
+  const rating = el(
+    'div',
+    { class: 'djg-rating' },
+    el('div', { class: 'djg-rating-ask', text: '👇 Rate the groan' }),
+    el('div', { class: 'djg-levels' }, ...levelButtons),
+    verdict,
+  );
+  const meterSlot = el('div');
   wrap.appendChild(
     el(
       'section',
       { class: 'djg-panel djg-meter' },
       el('h2', { text: '📟 Rate the Damage' }),
-      el(
-        'div',
-        { class: 'djg-meter-grid' },
-        gaugeHolder,
-        el('div', {}, el('div', { class: 'djg-levels' }, ...levelButtons), verdict),
-      ),
+      el('div', { class: 'djg-meter-grid' }, gaugeHolder, meterSlot),
     ),
   );
+
+  // On phones the rating sits right under the punchline, so nobody misses it; on wider
+  // screens it lives in the Groan-o-Meter panel. One set of buttons, moved between the two.
+  const phone = window.matchMedia('(max-width: 560px)');
+  const placeRating = () => {
+    if (phone.matches) bubbles.insertBefore(rating, miniPull);
+    else meterSlot.appendChild(rating);
+  };
+  placeRating();
+  phone.addEventListener('change', placeRating);
 
   // Lists
   const hall = el('ol');
@@ -401,7 +409,7 @@ export function mountDadOMatic(element, backend) {
     });
     lever.classList.add('pulled');
     setTimeout(() => lever.classList.remove('pulled'), 450);
-    root.classList.remove('is-punchline');
+    root.classList.remove('is-punchline', 'has-punchline');
     punch.classList.remove('show');
     badum.classList.remove('show');
     verdict.textContent = 'Dad is loading a pun...';
@@ -456,7 +464,7 @@ export function mountDadOMatic(element, backend) {
     void punch.offsetWidth; // restart the slam animation
     punch.classList.add('show');
     badum.classList.add('show');
-    root.classList.add('is-punchline');
+    root.classList.add('is-punchline', 'has-punchline');
     confetti(root, ['😂', '🥁', '👔', '🤣', '💥', '🧔']);
     verdict.textContent = joke.reusedFrom
       ? '🔁 Encore! A repeat from the joke bank, by popular demand. Rate it again.'

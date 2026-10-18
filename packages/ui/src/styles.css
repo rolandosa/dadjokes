@@ -834,3 +834,47 @@
     align-self: center;
   }
 }
+
+/* The rating block: in the Groan-o-Meter panel on wide screens, under the punchline on phones. */
+.djg-rating-ask {
+  display: none;
+}
+@media (max-width: 560px) {
+  .djg-bubbles .djg-rating {
+    display: none;
+    width: 100%;
+  }
+  .djg.has-punchline .djg-bubbles .djg-rating {
+    display: block;
+    animation: djg-pop 0.4s ease;
+  }
+  .djg-bubbles .djg-rating-ask {
+    display: block;
+    font-family: 'Bungee', sans-serif;
+    font-size: 16px;
+    text-align: center;
+    margin: 4px 0 8px;
+  }
+  .djg-bubbles .djg-levels {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .djg-bubbles .djg-level {
+    padding: 6px 2px;
+    font-size: 10px;
+    line-height: 1.1;
+    border-width: 3px;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .djg-bubbles .djg-level .e {
+    font-size: 28px;
+  }
+  .djg-bubbles .djg-verdict {
+    font-size: 18px;
+    margin-top: 8px;
+  }
+  /* The meter panel keeps just the gauge on phones. */
+  .djg-meter .djg-meter-grid {
+    grid-template-columns: 1fr;
+  }
+}
