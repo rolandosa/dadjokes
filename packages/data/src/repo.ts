@@ -35,13 +35,16 @@ export class DynamoRepo implements Repo {
   ) {}
 
   async addJoke(joke: ToldJoke): Promise<void> {
+    // An unrated joke has no level/score attributes at all (not NULLs), so rateJoke's
+    // "not rated yet" condition can test for their absence.
+    const { level: _level, score: _score, ...unrated } = joke;
     await this.db.send(
       new TransactWriteCommand({
         TransactItems: [
           {
             Put: {
               TableName: this.table,
-              Item: { PK: FEED, SK: feedSk(joke.id), ...joke },
+              Item: { PK: FEED, SK: feedSk(joke.id), ...unrated },
               ConditionExpression: 'attribute_not_exists(PK)',
             },
           },
@@ -73,10 +76,16 @@ export class DynamoRepo implements Repo {
                 TableName: this.table,
                 Key: key,
                 UpdateExpression: 'SET #level = :level, score = :score',
-                // A second rating racing this one loses here, so counts stay right.
-                ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(score)',
+                // A second rating racing this one loses here, so counts stay right. Rows
+                // written before addJoke stopped storing NULLs carry score = NULL.
+                ConditionExpression:
+                  'attribute_exists(PK) AND (attribute_not_exists(score) OR attribute_type(score, :null))',
                 ExpressionAttributeNames: { '#level': 'level' },
-                ExpressionAttributeValues: { ':level': level.key, ':score': level.score },
+                ExpressionAttributeValues: {
+                  ':level': level.key,
+                  ':score': level.score,
+                  ':null': 'NULL',
+                },
               },
             },
             {

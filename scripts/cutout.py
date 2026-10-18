@@ -41,6 +41,6 @@ for name, path in zip(NAMES, sys.argv[1:5]):
     im = cutout(path)
     h = round(im.height * WIDTH / im.width)
     im = im.resize((WIDTH, h), Image.LANCZOS)
-    out = f'client/assets/{name}.webp'
+    out = f'packages/ui/assets/{name}.webp'
     im.save(out, 'WEBP', quality=86, method=6)
     print(out, im.size)
