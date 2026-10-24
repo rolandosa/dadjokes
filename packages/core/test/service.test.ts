@@ -70,13 +70,25 @@ describe('newJoke', () => {
 
   it('stops calling the model once the daily cap is reached', async () => {
     const repo = memoryRepo();
-    const llm = llmSaying(GOOD);
+    // A different joke each call, so no call is spent on a repeat.
+    let n = 0;
+    const calls: string[] = [];
+    const llm: Llm = {
+      async joke(_s, user) {
+        calls.push(user);
+        n += 1;
+        return JSON.stringify({
+          setup: `Why did capped joke ${n} happen?`,
+          punchline: `Reason ${n}.`,
+        });
+      },
+    };
     const now = new Date('2026-10-18T12:00:00Z');
     const sources = [];
     for (let i = 0; i < 3; i++)
       sources.push((await newJoke(repo, llm, 'any', { dailyCap: 2, now })).source);
     expect(sources).toEqual(['ai', 'ai', 'library-cap']);
-    expect(llm.calls).toHaveLength(2);
+    expect(calls).toHaveLength(2);
   });
 
   it('picks a real category for "any" or junk input', async () => {

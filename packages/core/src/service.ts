@@ -1,9 +1,10 @@
 import { ULID_RE, ulid, ulidFloor, ulidTime } from './ids.js';
-import { CATEGORIES, CATEGORY_KEYS, generateJoke, levelByKey } from './jokes.js';
+import { CATEGORIES, CATEGORY_KEYS, allJokes, generateJoke, levelByKey } from './jokes.js';
 import type { CategoryKey } from './jokes.js';
 import { externalKey, splitJoke } from './external.js';
 import type { ExternalJokes, Llm, Repo } from './ports.js';
-import { JOKE_SYSTEM, jokeUserMessage, parseJokeReply } from './prompts/joke.js';
+import { fingerprints } from './fingerprint.js';
+import { JOKE_SYSTEM, jokeUserMessage, parseJokeReplies } from './prompts/joke.js';
 import type { Board, ToldJoke } from './types.js';
 
 /** How many jokes each list on the page shows. */
@@ -86,11 +87,33 @@ export interface NewJokeOptions {
 export type JokeSource =
   | 'encore'
   | 'external'
+  | 'external-after-repeat'
   | 'ai'
+  | 'ai-retry'
   | 'library-no-llm'
   | 'library-cap'
   | 'library-bad-reply'
-  | 'library-llm-error';
+  | 'library-llm-error'
+  | 'library-repeat';
+
+/** Model calls per pull at most: the first, and one retry when all its jokes were told before. */
+const AI_ATTEMPTS = 2;
+
+/** An untold library joke whose fingerprints are free; any library joke when none is. */
+async function fromLibrary(
+  repo: Repo,
+  category: CategoryKey,
+  avoid: ReadonlySet<string>,
+  random: () => number,
+) {
+  const pool = allJokes(category)
+    .filter((j) => !avoid.has(j.setup))
+    .sort(() => random() - 0.5);
+  for (const j of pool) {
+    if (await repo.claimFingerprints(fingerprints(j.setup, j.punchline))) return j;
+  }
+  return generateJoke(category, avoid, random);
+}
 
 /** How many external jokes one pull looks at, at most, before giving up on the collection. */
 const EXTERNAL_TRIES = 5;
@@ -123,7 +146,12 @@ async function fromExternal(
       if (!joke || avoid.has(joke.setup)) continue;
       tries += 1;
       const key = externalKey(candidate.id);
-      if (await repo.claimExternal(key)) return { key, ...joke };
+      // Its id is new, but the same joke may have been told from another source.
+      if (
+        (await repo.claimExternal(key)) &&
+        (await repo.claimFingerprints(fingerprints(joke.setup, joke.punchline)))
+      )
+        return { key, ...joke };
     }
   }
   return null;
@@ -192,22 +220,63 @@ export async function newJoke(
   let source: JokeSource = 'library-no-llm';
   let written: { setup: string; punchline: string } | null = null;
   if (llm) {
-    const calls = await repo.bumpAiCalls(now.toISOString().slice(0, 10));
-    if (calls > opts.dailyCap) source = 'library-cap';
-    else {
+    const rejected: string[] = [];
+    for (let attempt = 0; attempt < AI_ATTEMPTS && !written; attempt++) {
+      const calls = await repo.bumpAiCalls(now.toISOString().slice(0, 10));
+      if (calls > opts.dailyCap) {
+        source = 'library-cap';
+        break;
+      }
+      let candidates;
       try {
-        written = parseJokeReply(
-          await llm.joke(JOKE_SYSTEM, jokeUserMessage(CATEGORIES[pick].topic, recent)),
+        const avoid = [...rejected, ...recent];
+        candidates = parseJokeReplies(
+          await llm.joke(JOKE_SYSTEM, jokeUserMessage(CATEGORIES[pick].topic, avoid)),
         );
-        source = written ? 'ai' : 'library-bad-reply';
       } catch {
         source = 'library-llm-error';
+        break;
+      }
+      if (!candidates.length) {
+        source = 'library-bad-reply';
+        break;
+      }
+      // The first candidate never told before (SPEC "No repeats").
+      for (const c of candidates) {
+        if (await repo.claimFingerprints(fingerprints(c.setup, c.punchline))) {
+          written = c;
+          break;
+        }
+      }
+      if (written) source = attempt === 0 ? 'ai' : 'ai-retry';
+      else {
+        rejected.push(...candidates.map((c) => c.setup));
+        source = 'library-repeat';
       }
     }
   }
+
+  // Every joke the model offered was a repeat: try the external collection before the library.
+  if (!written && source === 'library-repeat' && opts.external && externalSource) {
+    const found = await fromExternal(repo, opts.external, externalSource, new Set(recent), random);
+    if (found) {
+      const joke: ToldJoke = {
+        id: ulid(),
+        ...found,
+        category: pick,
+        level: null,
+        score: null,
+        toldAt,
+        reusedFrom: null,
+      };
+      await repo.addJoke(joke);
+      return { joke, source: 'external-after-repeat' };
+    }
+  }
+
   const base = written
     ? { key: 'ai', category: pick, ...written }
-    : generateJoke(pick, new Set(recent), random);
+    : await fromLibrary(repo, pick, new Set(recent), random);
   const joke: ToldJoke = {
     id: ulid(),
     ...base,

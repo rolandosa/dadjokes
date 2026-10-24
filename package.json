@@ -21,11 +21,13 @@
     "aws:deploy": "pnpm --filter @dadjokes/web build && pnpm --filter @dadjokes/infra exec cdk deploy --require-approval broadening",
     "qr": "tsx scripts/qr.ts",
     "vault:build": "pnpm --filter @dadjokes/vault run package",
-    "vault:deploy": "./scripts/vault-deploy.sh"
+    "vault:deploy": "./scripts/vault-deploy.sh",
+    "prod:dedupe": "tsx scripts/dedupe-jokes.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "3.1137.0",
     "@aws-sdk/client-dynamodb": "3.1137.0",
+    "@aws-sdk/lib-dynamodb": "3.1137.0",
     "@dadjokes/api": "workspace:*",
     "@dadjokes/core": "workspace:*",
     "@dadjokes/data": "workspace:*",

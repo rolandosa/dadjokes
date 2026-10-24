@@ -13,7 +13,7 @@ import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type { GroanLevel } from '@dadjokes/core/jokes';
 import type { Repo } from '@dadjokes/core/ports';
 import type { Board, ToldJoke } from '@dadjokes/core/types';
-import { EXT, FEED, STATS, TOP, aiCallsSk, feedSk, topSk } from './keys.js';
+import { EXT, FEED, SEEN, STATS, TOP, aiCallsSk, feedSk, topSk } from './keys.js';
 
 const JOKE_FIELDS = [
   'id',
@@ -221,6 +221,27 @@ export class DynamoRepo implements Repo {
       return true;
     } catch (err) {
       if (err instanceof ConditionalCheckFailedException) return false;
+      throw err;
+    }
+  }
+
+  async claimFingerprints(keys: readonly string[]): Promise<boolean> {
+    if (!keys.length) return true;
+    try {
+      await this.db.send(
+        new TransactWriteCommand({
+          TransactItems: keys.map((key) => ({
+            Put: {
+              TableName: this.table,
+              Item: { PK: SEEN, SK: key },
+              ConditionExpression: 'attribute_not_exists(PK)',
+            },
+          })),
+        }),
+      );
+      return true;
+    } catch (err) {
+      if (err instanceof TransactionCanceledException) return false;
       throw err;
     }
   }

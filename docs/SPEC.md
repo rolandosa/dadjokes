@@ -27,12 +27,13 @@ One DynamoDB table, `dadjokes`, keys only (`PK`, `SK`), no index. On-demand bill
 50 read / 20 write request units per second: the account's always-free 25 WCU are already
 used by Pantry (provisioned 15 RCU / 25 WCU) and OurToDos (5/5).
 
-| PK      | SK                | What                                                                                |
-| ------- | ----------------- | ----------------------------------------------------------------------------------- |
-| `FEED`  | `J#<ulid>`        | Every told joke. ULIDs sort by time, so newest is last.                             |
-| `TOP`   | `<score>#<ulid>`  | A copy of each rated joke, so a reverse query ranks them.                           |
-| `STATS` | `STATS`           | `told`, `rated`, `groans` (sum of scores), `bank`, `reused`, `sinceReuse` counters. |
-| `STATS` | `AI#<YYYY-MM-DD>` | Model calls that UTC day, for the daily cap.                                        |
+| PK      | SK                        | What                                                                                |
+| ------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| `FEED`  | `J#<ulid>`                | Every told joke. ULIDs sort by time, so newest is last.                             |
+| `TOP`   | `<score>#<ulid>`          | A copy of each rated joke, so a reverse query ranks them.                           |
+| `STATS` | `STATS`                   | `told`, `rated`, `groans` (sum of scores), `bank`, `reused`, `sinceReuse` counters. |
+| `SEEN`  | `s:<words>` / `p:<words>` | Fingerprint of a setup / punchline already told.                                    |
+| `STATS` | `AI#<YYYY-MM-DD>`         | Model calls that UTC day, for the daily cap.                                        |
 
 A joke row holds `id, key` (`<category>:<n>` library, `ai`, or `ext:<source>:<id>`), `category, setup, punchline, toldAt`, plus `level, score` once rated
 and `reusedFrom` (the original's id) when it is an encore.
@@ -87,6 +88,23 @@ of the model (`api/src/icanhazdadjoke.ts`, 2.5 s timeout, a User-Agent naming th
   and a joke already claimed is skipped (encores aside). Stored with `key` `ext:...`; the page
   shows a "via icanhazdadjoke.com" link under its punchline.
 - If the collection fails, times out or has nothing usable, the model writes the joke.
+
+## No repeats
+
+A joke is told once (encores aside). `core/src/fingerprint.ts` turns a setup into a key of its
+content words (lowercased, small words dropped, plurals folded, sorted), and a punchline into one
+when it has at least 3 content words, so rewordings match ("win a Nobel Prize" = "win the Nobel
+Prize"). Before a joke is told its keys are claimed atomically (`SEEN / <key>` rows, one
+transaction); a key claimed before means a repeat.
+
+- Sonnet returns 3 candidate jokes per call (`JOKES_PER_CALL`); the first unclaimed one is told.
+  If all 3 are repeats it is called once more with them added to "avoid" (`ai-retry`); if that
+  fails too, an untold external joke (`external-after-repeat`), then an untold library joke
+  (`library-repeat`). Each call counts against the daily cap.
+- External and library jokes are fingerprint-checked too. Encores are the one deliberate repeat.
+- `pnpm prod:dedupe` (dry run; `APPLY=1` to apply) removed the 11 repeats told before this
+  existed on 2026-10-24 and recorded the fingerprints of the 118 jokes left: in each group of
+  repeats the unrated copies went, then the lower-rated ones.
 
 ## Joke generation
 

@@ -8,11 +8,13 @@ import { ULID_RE } from '@dadjokes/core/ids';
  * - STATS / STATS: running counts for the header.
  * - STATS / AI#<YYYY-MM-DD>: model calls that day, for the daily cap.
  * - EXT / <key>: an external joke already told, so it is not told again.
+ * - SEEN / <fingerprint>: a setup or punchline already told (core/src/fingerprint.ts).
  */
 export const FEED = 'FEED';
 export const TOP = 'TOP';
 export const STATS = 'STATS';
 export const EXT = 'EXT';
+export const SEEN = 'SEEN';
 
 function checkId(id: string): string {
   if (!ULID_RE.test(id)) throw new RangeError('joke id must be a ULID');

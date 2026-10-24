@@ -7,6 +7,7 @@ export function memoryRepo(): Repo {
   const jokes = new Map<string, ToldJoke>();
   const aiCalls = new Map<string, number>();
   const usedExternal = new Set<string>();
+  const seen = new Set<string>();
   // DynamoRepo's STATS counters for encores.
   let bank = 0;
   let sinceReuse: number | undefined;
@@ -67,6 +68,11 @@ export function memoryRepo(): Repo {
     async claimExternal(key: string) {
       if (usedExternal.has(key)) return false;
       usedExternal.add(key);
+      return true;
+    },
+    async claimFingerprints(keys: readonly string[]) {
+      if (keys.some((k) => seen.has(k))) return false;
+      keys.forEach((k) => seen.add(k));
       return true;
     },
     async bumpAiCalls(day: string) {

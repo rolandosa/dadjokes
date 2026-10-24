@@ -29,6 +29,11 @@ export interface Repo {
    * external joke is told once (encores aside).
    */
   claimExternal(key: string): Promise<boolean>;
+  /**
+   * Claims a joke's fingerprints (core/src/fingerprint.ts) in one atomic step. False, and
+   * nothing claimed, when any of them was claimed before: the joke was already told.
+   */
+  claimFingerprints(keys: readonly string[]): Promise<boolean>;
   /** Adds one to the count of model calls on `day` (YYYY-MM-DD) and returns the new count. */
   bumpAiCalls(day: string): Promise<number>;
 }

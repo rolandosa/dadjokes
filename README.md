@@ -20,6 +20,8 @@ from Vault on 2026-10-24 and is kept as code only: do not deploy it without the 
   category's topic, avoiding the last 20 told. The site's categories are Classics, Grill Talk, Lab
   Coat and Zoo Puns. If the model fails, writes something off-limits, or the
   daily cap of 500 calls is reached, Dad falls back to the built-in library.
+- **No repeats.** Every joke is fingerprinted and told once; Sonnet offers three per call and
+  the first new one wins.
 - **Encores.** Once more than 200 jokes are stored, Dad may repeat a well-rated one, but never
   two in a row and at most one in any ten.
 - **Rate the damage.** In dad-joke land, the more it hurts the better:
