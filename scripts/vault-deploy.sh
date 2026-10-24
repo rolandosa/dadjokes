@@ -6,6 +6,14 @@
 # VAULT_SESSION may be omitted when a proxy already authenticates requests to VAULT_HOST.
 set -euo pipefail
 
+# The owner removed the page from Vault on 2026-10-24 and asked that nothing be deployed to
+# Vault again without their specific instruction. Refuse unless that approval is given.
+if [[ "${VAULT_DEPLOY_APPROVED:-}" != "yes" ]]; then
+  echo "Refusing to deploy to Vault: the Dad-O-Matic page was removed from Vault on purpose." >&2
+  echo "Deploy only on the owner's specific instruction, then run with VAULT_DEPLOY_APPROVED=yes." >&2
+  exit 1
+fi
+
 : "${VAULT_HOST:?Set VAULT_HOST, e.g. myvault.veevavault.com}"
 API="https://${VAULT_HOST}/api"
 VERSION="${VAULT_API_VERSION:-v25.2}"

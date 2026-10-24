@@ -1,6 +1,7 @@
 import { GIT_SHA, healthz, json, readBody, route, text, tooLarge } from '@dadjokes/core/http';
 import type { FnUrlEvent, FnUrlResult, RouteDef } from '@dadjokes/core/http';
 import { errName, log } from '@dadjokes/core/log';
+import { SITE_CATEGORIES } from '@dadjokes/core/jokes';
 import type { ExternalJokes, Llm, Repo } from '@dadjokes/core/ports';
 import { BadInput, Conflict, NotFound, board, newJoke, rateJoke } from '@dadjokes/core/service';
 import { DynamoRepo } from '@dadjokes/data/repo';
@@ -65,10 +66,11 @@ function parse(event: FnUrlEvent): Record<string, unknown> {
 async function dispatch(event: FnUrlEvent, name: string, params: Record<string, string>) {
   switch (name) {
     case 'board':
-      return json(200, await board(getRepo()), NO_STORE);
+      return json(200, await board(getRepo(), SITE_CATEGORIES), NO_STORE);
     case 'new': {
       const { joke, source } = await newJoke(getRepo(), getLlm(), parse(event).category, {
         dailyCap: dailyCap(),
+        categories: SITE_CATEGORIES,
         external: getExternal(),
         externalShare: externalShare(),
       });

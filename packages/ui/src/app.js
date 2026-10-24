@@ -150,7 +150,8 @@ function fullscreenToggle(root) {
  *   or saveJoke(joke) -> Promise<id> to store one picked here from the library;
  *   rateJoke(id, level) -> Promise, loadBoard() -> Promise<Board>,
  *   place: where jokes are filed ("Vault", "the cloud"), tagline: the line under the lever,
- *   fullscreen: true to offer a Fullscreen button (the Vault page; the public site has none).
+ *   fullscreen: true to offer a Fullscreen button (the Vault page; the public site has none),
+ *   categories: the category keys to offer (default: all).
  * Board rows are { setup, punchline, category, level } (core/types ToldJoke).
  */
 export function mountDadOMatic(element, backend) {
@@ -270,7 +271,10 @@ export function mountDadOMatic(element, backend) {
     catRow.appendChild(b);
   };
   addCat('any', '🎲 Surprise me');
-  Object.entries(CATEGORIES).forEach(([k, c]) => addCat(k, `${c.icon} ${c.label}`));
+  // backend.categories limits the chips (the public site has no Vault & Pharma).
+  Object.entries(CATEGORIES)
+    .filter(([k]) => !backend.categories || backend.categories.includes(k))
+    .forEach(([k, c]) => addCat(k, `${c.icon} ${c.label}`));
 
   const lever = el(
     'button',

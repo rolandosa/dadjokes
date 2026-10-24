@@ -1,5 +1,5 @@
 import { ULID_RE, ulid, ulidFloor, ulidTime } from './ids.js';
-import { CATEGORIES, CATEGORY_KEYS, generateJoke, isCategory, levelByKey } from './jokes.js';
+import { CATEGORIES, CATEGORY_KEYS, generateJoke, levelByKey } from './jokes.js';
 import type { CategoryKey } from './jokes.js';
 import { externalKey, splitJoke } from './external.js';
 import type { ExternalJokes, Llm, Repo } from './ports.js';
@@ -46,6 +46,7 @@ async function pickEncore(
   repo: Repo,
   category: CategoryKey,
   anyCategory: boolean,
+  allowed: readonly CategoryKey[],
   avoid: ReadonlySet<string>,
   now: Date,
   random: () => number,
@@ -56,7 +57,10 @@ async function pickEncore(
   for (let i = 0; i <= DRAWS; i++) {
     const at = i === DRAWS ? from : from + Math.floor(random() * Math.max(1, now.getTime() - from));
     const fits = (await repo.originalsFrom(ulidFloor(at), DRAW_SIZE)).filter(
-      (j) => !avoid.has(j.setup) && (anyCategory || j.category === category),
+      (j) =>
+        !avoid.has(j.setup) &&
+        allowed.includes(j.category) &&
+        (anyCategory || j.category === category),
     );
     if (!fits.length) continue;
     const best = Math.max(...fits.map((j) => j.score ?? 0));
@@ -72,6 +76,8 @@ export interface NewJokeOptions {
   /** The external collection, and the share of new jokes to take from it (0 to 1). */
   external?: ExternalJokes | null;
   externalShare?: number;
+  /** Categories this caller offers; a request for any other is treated as "Surprise me". */
+  categories?: readonly CategoryKey[];
   now?: Date;
   random?: () => number;
 }
@@ -137,15 +143,16 @@ export async function newJoke(
 ): Promise<{ joke: ToldJoke; source: JokeSource }> {
   const now = opts.now ?? new Date();
   const random = opts.random ?? Math.random;
-  const asked = typeof category === 'string' && isCategory(category);
+  const allowed = opts.categories ?? CATEGORY_KEYS;
+  const asked = typeof category === 'string' && (allowed as readonly string[]).includes(category);
   const pick: CategoryKey = asked
-    ? category
-    : CATEGORY_KEYS[Math.floor(random() * CATEGORY_KEYS.length)]!;
+    ? (category as CategoryKey)
+    : allowed[Math.floor(random() * allowed.length)]!;
   const recent = await repo.recentSetups(AVOID_COUNT);
   const toldAt = now.toISOString();
 
   if (await repo.claimReuse(REUSE_MIN_BANK, REUSE_GAP)) {
-    const original = await pickEncore(repo, pick, !asked, new Set(recent), now, random);
+    const original = await pickEncore(repo, pick, !asked, allowed, new Set(recent), now, random);
     if (original) {
       const encore: ToldJoke = {
         id: ulid(),
@@ -222,4 +229,17 @@ export async function rateJoke(repo: Repo, id: unknown, levelKey: unknown): Prom
   if (result === 'already') throw new Conflict('already rated');
 }
 
-export const board = (repo: Repo): Promise<Board> => repo.board(BOARD_SIZE);
+/**
+ * The two lists and the stats. With `categories`, jokes from other categories are left out of
+ * the lists (the stats still count every joke ever told).
+ */
+export async function board(repo: Repo, categories?: readonly CategoryKey[]): Promise<Board> {
+  if (!categories) return repo.board(BOARD_SIZE);
+  const b = await repo.board(BOARD_SIZE * 3);
+  const keep = (j: ToldJoke) => categories.includes(j.category);
+  return {
+    ...b,
+    top: b.top.filter(keep).slice(0, BOARD_SIZE),
+    recent: b.recent.filter(keep).slice(0, BOARD_SIZE),
+  };
+}

@@ -7,11 +7,19 @@ punchline, then rate it on the Groan-o-Meter. Two front doors share one UI (`pac
 
 - **The public site** on AWS (`packages/web`, `packages/api`, `infra`). No login, no paywall:
   anyone with the link can tell and rate jokes. Jokes are written by Bedrock.
-- **The Vault Custom Page** (`packages/vault`, `mdl/`). Jokes come from the built-in library
-  and are stored as `dad_joke__c` records in the Vault.
+- **The Vault Custom Page** (`packages/vault`, `mdl/`), code only. It was removed from Vault on
+  2026-10-24 (tab, page and client code dropped; the `dad_joke__c` object and its records remain)
+  and is not to be redeployed without the owner's instruction.
 
 Same AWS account and region as Pantry and OurToDos (`us-east-2`), built on OurToDos' skeleton:
 `core` (rules, no I/O), `data` (DynamoDB), `api` (Lambda), `web` (the page), `infra` (CDK).
+
+## Categories
+
+The site offers Classics, Grill Talk, Lab Coat and Zoo Puns (`SITE_CATEGORIES`). Vault & Pharma
+stays in the library for the Vault page code, but the API never tells one on the site: a request
+for it is treated as "Surprise me", encores skip stored vault jokes, and the Hall of Groans and
+latest lists leave them out (the header stats still count every joke ever told).
 
 ## Data model
 

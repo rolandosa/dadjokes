@@ -171,6 +171,9 @@ export const CATEGORIES: Record<CategoryKey, Category> = {
 
 export const CATEGORY_KEYS = Object.keys(CATEGORIES) as CategoryKey[];
 
+/** The public site's categories: everything but Vault & Pharma, which is only for the Vault page. */
+export const SITE_CATEGORIES: readonly CategoryKey[] = CATEGORY_KEYS.filter((k) => k !== 'vault');
+
 export const isCategory = (k: string): k is CategoryKey => (CATEGORY_KEYS as string[]).includes(k);
 
 /** The joke for a `<category>:<index>` key, or null when the key names no joke. */

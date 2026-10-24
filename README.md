@@ -8,14 +8,17 @@ Press **Hit me with it!** for the punchline, then rate the damage on the **Groan
 
 ![Dad-O-Matic on the web](docs/screenshot.png)
 
-The same page also runs inside Veeva Vault as a Custom Page, storing jokes as Vault records.
+The repo also holds a Veeva Vault Custom Page version (`packages/vault`, `mdl/`). It was removed
+from Vault on 2026-10-24 and is kept as code only: do not deploy it without the owner's say-so
+(see [`CLAUDE.md`](CLAUDE.md)).
 [`docs/SPEC.md`](docs/SPEC.md) has the details; [`docs/BACKLOG.md`](docs/BACKLOG.md) lists what's next.
 
 ## What it does
 
 - **New jokes every time.** About 40% come from [icanhazdadjoke.com](https://icanhazdadjoke.com)
   (each used once, credited on the page); Sonnet 4.6 (Bedrock) writes the rest on the picked
-  category's topic, avoiding the last 20 told. Only Vault & Pharma talks about Veeva. If the model fails, writes something off-limits, or the
+  category's topic, avoiding the last 20 told. The site's categories are Classics, Grill Talk, Lab
+  Coat and Zoo Puns. If the model fails, writes something off-limits, or the
   daily cap of 500 calls is reached, Dad falls back to the built-in library.
 - **Encores.** Once more than 200 jokes are stored, Dad may repeat a well-rated one, but never
   two in a row and at most one in any ten.
@@ -30,7 +33,6 @@ The same page also runs inside Veeva Vault as a Custom Page, storing jokes as Va
   | 5     | 🚪 Left the Room | The highest honour a dad can receive.      |
 
 - **Hall of Groans** (top-rated) and **Fresh Off the Grill** (latest), shared by everyone.
-- The Vault page also has a **Fullscreen** button (Esc exits); the public site does not.
 
 ## Layout
 
@@ -73,7 +75,8 @@ pnpm qr             # rewrites docs/qr.png from the stack's WebUrl
 Options: `-c jokeModel=<bedrock model id>` and `-c aiDailyCap=<calls per day>` on
 `pnpm --filter @dadjokes/infra exec cdk deploy`.
 
-The Vault page: `VAULT_HOST=myvault.veevavault.com VAULT_SESSION=<session id> pnpm vault:deploy`.
+The Vault page is not deployed. `scripts/vault-deploy.sh` refuses to run unless the owner has
+asked for a Vault deploy and `VAULT_DEPLOY_APPROVED=yes` is set.
 
 ## Replacing Dad
 
