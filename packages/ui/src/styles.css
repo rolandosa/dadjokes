@@ -321,6 +321,29 @@
 .djg.is-punchline .dad-grin {
   opacity: 1;
 }
+/* Rated lowest (Polite Nod): Dad's face falls, and he droops a little. */
+.dad-sad {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.djg.is-sad .dad-sad {
+  opacity: 1;
+}
+.djg.is-sad .dad-grin,
+.djg.is-sad .dad-talk {
+  opacity: 0;
+}
+.djg.is-sad .dad-blink {
+  animation: none;
+}
+.djg.is-sad .dad {
+  animation: djg-droop 0.9s ease-out forwards;
+}
+@keyframes djg-droop {
+  to {
+    transform: translateY(5px) rotate(-1.5deg);
+  }
+}
 .djg.is-punchline .dad-blink {
   animation: none;
 }
@@ -951,4 +974,9 @@
   .djg-bubbles > .djg-credit {
     justify-self: end;
   }
+}
+
+/* When the page scrolls the pull button into view, leave a little room below it. */
+.djg-pull {
+  scroll-margin-bottom: 16px;
 }

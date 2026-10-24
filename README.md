@@ -82,10 +82,11 @@ asked for a Vault deploy and `VAULT_DEPLOY_APPROVED=yes` is set.
 
 ## Replacing Dad
 
-Supply four photos that are identical apart from the face: rest (mouth closed), talk (mouth
-part open), grin (big laugh) and blink (eyes closed), with a light background. Then:
+Supply five photos that are identical apart from the face: rest (mouth closed), talk (mouth
+part open), grin (big laugh), blink (eyes closed) and sad (a frown, shown on a Polite Nod), with a
+light background. Then:
 
 ```sh
 pip install numpy pillow scipy
-python3 scripts/cutout.py rest.jpg talk.jpg grin.jpg blink.jpg   # writes packages/ui/assets/*.webp
+python3 scripts/cutout.py rest.jpg talk.jpg grin.jpg blink.jpg sad.jpg   # writes packages/ui/assets/*.webp
 ```

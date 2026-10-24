@@ -1,6 +1,6 @@
 """Remove the baked-in checkerboard from the Dad photos and export web-ready WebPs.
 
-    python3 scripts/cutout.py <rest.jpg> <talk.jpg> <grin.jpg> <blink.jpg>
+    python3 scripts/cutout.py <rest.jpg> <talk.jpg> <grin.jpg> <blink.jpg> [<sad.jpg>]
 
 The background is keyed out as the neutral, light region connected to the image border,
 so light parts of Dad (the blue shirt, eye whites) are kept.
@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 from scipy import ndimage
 
-NAMES = ['dad-rest', 'dad-talk', 'dad-grin', 'dad-blink']
+NAMES = ['dad-rest', 'dad-talk', 'dad-grin', 'dad-blink', 'dad-sad']
 WIDTH = 600
 
 
@@ -37,7 +37,7 @@ def cutout(path):
     return im
 
 
-for name, path in zip(NAMES, sys.argv[1:5]):
+for name, path in zip(NAMES, sys.argv[1:6]):
     im = cutout(path)
     h = round(im.height * WIDTH / im.width)
     im = im.resize((WIDTH, h), Image.LANCZOS)

@@ -456,7 +456,7 @@ export function mountDadOMatic(element, backend) {
     });
     lever.classList.add('pulled');
     setTimeout(() => lever.classList.remove('pulled'), 450);
-    root.classList.remove('is-punchline', 'has-punchline');
+    root.classList.remove('is-punchline', 'has-punchline', 'is-sad');
     punch.classList.remove('show');
     badum.classList.remove('show');
     verdict.textContent = 'Dad is loading a pun...';
@@ -532,6 +532,7 @@ export function mountDadOMatic(element, backend) {
       b.classList.toggle('chosen', GROAN_LEVELS[i] === level);
     });
     setNeedle(level.score);
+    root.classList.toggle('is-sad', level.score === 1);
     verdict.textContent = `${level.emoji} ${level.quip}`;
     verdict.classList.remove('pop');
     void verdict.offsetWidth;
@@ -549,7 +550,7 @@ export function mountDadOMatic(element, backend) {
     // On phones the rating pushes the pull button below the screen: once the verdict has its
     // final length, bring the button back into view for the next joke.
     if (window.matchMedia('(max-width: 560px)').matches) {
-      pull.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pull.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 

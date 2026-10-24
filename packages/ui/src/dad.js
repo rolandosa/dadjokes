@@ -1,11 +1,13 @@
-// Dad, a felt puppet photographed in four expressions. The frames are identical apart from
+// Dad, a felt puppet photographed in five expressions. The frames are identical apart from
 // the face, so they are stacked and swapped by styles.css. Inlined as data URLs by esbuild.
 import rest from '../assets/dad-rest.webp';
 import talk from '../assets/dad-talk.webp';
 import grin from '../assets/dad-grin.webp';
 import blink from '../assets/dad-blink.webp';
+import sad from '../assets/dad-sad.webp';
 
-const FRAMES = { rest, talk, grin, blink };
+// Later frames stack on top: sad covers the grin when a joke is rated lowest.
+const FRAMES = { rest, talk, grin, blink, sad };
 
 export function createDad() {
   const dad = document.createElement('div');
