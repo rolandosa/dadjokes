@@ -4,12 +4,46 @@ import {
   generateJoke,
   levelByKey,
   randomDadLine,
+  randomMomLine,
 } from '@dadjokes/core/jokes';
 // `?inline`: the CSS as a string (Vite); the Vault build's esbuild plugin strips the query.
 import css from './styles.css?inline';
 import { createDad } from './dad.js';
+import { createMom } from './mom.js';
 
-const FLOATERS = ['👔', '🧦', '🩴', '🍖', '🔧', '📺', '🧢', '☕', '🪓', '🌭', '⛳', '🔦'];
+// What changes between Dad and Mom (SPEC "Mom mode"); the machine is the same.
+const PERSONAS = {
+  dad: {
+    who: 'Dad',
+    title: 'DAD-O-MATIC 3000',
+    floaters: ['👔', '🧦', '🩴', '🍖', '🔧', '📺', '🧢', '☕', '🪓', '🌭', '⛳', '🔦'],
+    confetti: '🧔',
+    line: randomDadLine,
+    quip: (l) => l.quip,
+    create: createDad,
+  },
+  mom: {
+    who: 'Mom',
+    title: 'MOM-O-MATIC 3000',
+    floaters: ['👛', '🧁', '📱', '🧺', '☕', '🌷', '🧶', '🍪', '📞', '🛒', '🍷', '💐'],
+    confetti: '👩',
+    line: randomMomLine,
+    quip: (l) => l.momQuip,
+    create: createMom,
+  },
+};
+const MODE_KEY = 'djg-persona';
+
+/** `?mode=mom` in the link wins, then the visitor's last choice, then Dad. */
+function startingPersona() {
+  try {
+    const asked = new URLSearchParams(window.location.search).get('mode');
+    if (asked === 'mom' || asked === 'dad') return asked;
+    return window.localStorage.getItem(MODE_KEY) === 'mom' ? 'mom' : 'dad';
+  } catch {
+    return 'dad';
+  }
+}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const el = (tag, attrs = {}, ...children) => {
@@ -146,12 +180,13 @@ function fullscreenToggle(root) {
 
 /**
  * Mounts the Dad-O-Matic into `element`. The backend stores jokes and ratings:
- *   nextJoke(category) -> Promise<ToldJoke> when the backend writes and stores jokes itself,
- *   or saveJoke(joke) -> Promise<id> to store one picked here from the library;
- *   rateJoke(id, level) -> Promise, loadBoard() -> Promise<Board>,
+ *   nextJoke(category, persona) -> Promise<ToldJoke> when the backend writes and stores jokes
+ *   itself, or saveJoke(joke) -> Promise<id> to store one picked here from the library;
+ *   rateJoke(id, level, persona) -> Promise, loadBoard(persona) -> Promise<Board>,
  *   place: where jokes are filed ("Vault", "the cloud"), tagline: the line under the lever,
  *   fullscreen: true to offer a Fullscreen button (the Vault page; the public site has none),
- *   categories: the category keys to offer (default: all).
+ *   categories: the category keys to offer (default: all),
+ *   moms: true to offer the Dad | Mom toggle (the public site; persona is 'dad' or 'mom').
  * Board rows are { setup, punchline, category, level } (core/types ToldJoke).
  */
 export function mountDadOMatic(element, backend) {
@@ -159,16 +194,19 @@ export function mountDadOMatic(element, backend) {
   let category = 'any';
   let current = null; // { setup, punchline, category, id, saving }
   let busy = false;
+  let persona = backend.moms ? startingPersona() : 'dad';
+  let gen = 0; // bumped on a Dad/Mom switch, so a joke in flight for the other one is dropped
+  const P = () => PERSONAS[persona];
 
   element.replaceChildren();
-  const root = el('div', { class: 'djg' });
+  const root = el('div', { class: `djg${persona === 'mom' ? ' is-mom' : ''}` });
   root.appendChild(el('style', { text: css }));
   element.appendChild(root);
 
   const floaters = el('div', { class: 'djg-floaters' });
-  FLOATERS.forEach((f, i) => {
+  P().floaters.forEach((f, i, all) => {
     const s = el('span', { text: f });
-    s.style.left = `${(i / FLOATERS.length) * 100 + Math.random() * 5}%`;
+    s.style.left = `${(i / all.length) * 100 + Math.random() * 5}%`;
     s.style.animationDuration = `${14 + Math.random() * 14}s`;
     s.style.animationDelay = `${-Math.random() * 20}s`;
     floaters.appendChild(s);
@@ -184,6 +222,22 @@ export function mountDadOMatic(element, backend) {
   const statAvg = el('b', { text: '–' });
   if (backend.fullscreen) wrap.appendChild(fullscreenToggle(root));
 
+  const title = el('h1', { class: 'djg-title', text: P().title });
+  const modeButtons = ['dad', 'mom'].map((key) =>
+    el('button', {
+      class: 'djg-mode',
+      type: 'button',
+      'aria-pressed': String(key === persona),
+      text: key === 'dad' ? '👨 Dad' : '👩 Mom',
+      onclick: () => switchTo(key),
+    }),
+  );
+  const modeToggle = el(
+    'div',
+    { class: 'djg-modes', role: 'group', 'aria-label': 'Who tells the jokes' },
+    ...modeButtons,
+  );
+
   const bulbStrip = (edge) => {
     const strip = el('div', { class: `djg-bulbs ${edge}` });
     for (let i = 0; i < 60; i++) strip.appendChild(el('i'));
@@ -195,7 +249,8 @@ export function mountDadOMatic(element, backend) {
       { class: 'djg-marquee' },
       bulbStrip('top'),
       bulbStrip('bottom'),
-      el('h1', { class: 'djg-title', text: 'DAD-O-MATIC 3000' }),
+      backend.moms ? modeToggle : null,
+      title,
       el(
         'div',
         { class: 'djg-stats' },
@@ -207,7 +262,7 @@ export function mountDadOMatic(element, backend) {
   );
 
   // Theatre: dad + bubbles
-  const setupText = el('span', { text: randomDadLine() });
+  const setupText = el('span', { text: P().line() });
   const caret = el('span', { class: 'djg-caret' });
   const bubble = el('div', { class: 'djg-bubble' }, setupText, caret);
   const drum = el('div', { class: 'djg-drumroll', text: '🥁 drrrrrrrrrrrr...' });
@@ -228,7 +283,7 @@ export function mountDadOMatic(element, backend) {
     text: '👉 Hit me with it!',
   });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
-  const dadHolder = createDad();
+  let dadHolder = P().create();
 
   // The controls sit in the joke card, under the bubble: pick a topic and pull, read the setup,
   // ask for the punchline, rate it, pull again, all in one place.
@@ -330,7 +385,7 @@ export function mountDadOMatic(element, backend) {
   const needle = gaugeHolder.querySelector('.djg-needle');
   const verdict = el('div', {
     class: 'djg-verdict',
-    text: 'Pull the lever, then tell Dad how much it hurt.',
+    text: `Pull the lever, then tell ${P().who} how much it hurt.`,
   });
   const levelButtons = GROAN_LEVELS.map((l) =>
     el(
@@ -344,6 +399,13 @@ export function mountDadOMatic(element, backend) {
     'div',
     { class: 'djg-rating' },
     el('div', { class: 'djg-rating-ask', text: '👇 Rate the groan' }),
+    // Higher = groanier = a better dad joke; people read "Left the Room" as the worst.
+    el(
+      'div',
+      { class: 'djg-scale', 'aria-hidden': 'true' },
+      el('span', { text: '← Weak' }),
+      el('span', { text: 'Groan-worthy (best) →' }),
+    ),
     el('div', { class: 'djg-levels' }, ...levelButtons),
     verdict,
   );
@@ -391,7 +453,9 @@ export function mountDadOMatic(element, backend) {
 
   async function refresh() {
     try {
-      const { top, recent: latest, stats } = await backend.loadBoard();
+      const asked = persona;
+      const { top, recent: latest, stats } = await backend.loadBoard(persona);
+      if (asked !== persona) return; // switched while loading; the new board is on its way
       statTold.textContent = stats.told;
       statRated.textContent = stats.rated;
       statAvg.textContent = stats.rated ? `${stats.avg.toFixed(1)} / 5` : '–';
@@ -432,17 +496,65 @@ export function mountDadOMatic(element, backend) {
     }
   }
 
-  async function typeOut(text) {
+  async function typeOut(text, my) {
     setupText.textContent = '';
     for (const ch of text) {
+      if (my !== gen) return;
       setupText.textContent += ch;
       await wait(ch === ' ' ? 18 : 32);
     }
   }
 
+  let cancelReveal = null; // ends the wait for "Hit me with it!" when the visitor switches
+
+  /** Dad <-> Mom: new look, new words, her own jokes and Hall of Groans. */
+  function switchTo(next) {
+    if (next === persona) return;
+    persona = next;
+    gen += 1;
+    try {
+      window.localStorage.setItem(MODE_KEY, next);
+    } catch {
+      // private mode: the choice lasts for this visit only
+    }
+    modeButtons.forEach((b, i) =>
+      b.setAttribute('aria-pressed', String(i === (next === 'dad' ? 0 : 1))),
+    );
+    root.classList.toggle('is-mom', next === 'mom');
+    title.textContent = P().title;
+    const fresh = P().create();
+    dadHolder.replaceWith(fresh);
+    dadHolder = fresh;
+    [...floaters.children].forEach((s, i) => (s.textContent = P().floaters[i]));
+    // Drop the joke on stage: it belongs to the other one.
+    cancelReveal?.();
+    current = null;
+    busy = false;
+    told.clear();
+    root.classList.remove('is-thinking', 'is-drumroll', 'is-punchline', 'has-punchline', 'is-sad');
+    reveal.hidden = true;
+    punch.classList.remove('show');
+    punch.textContent = '';
+    credit.hidden = true;
+    badum.classList.remove('show');
+    setupText.textContent = P().line();
+    levelButtons.forEach((b) => {
+      b.disabled = true;
+      b.classList.remove('chosen');
+    });
+    verdict.textContent = `Pull the lever, then tell ${P().who} how much it hurt.`;
+    machineError.textContent = '';
+    lever.disabled = pull.disabled = false;
+    setNeedle(0.5);
+    statTold.textContent = statRated.textContent = statAvg.textContent = '–';
+    refresh();
+  }
+
   async function tellJoke() {
     if (busy) return;
     busy = true;
+    const my = gen;
+    const who = P().who;
     anchorTop = pageTop(controls);
     // Pulled from further down the page: bring Dad's bubble back into view to read the setup.
     if (bubble.getBoundingClientRect().top < 0) {
@@ -459,7 +571,7 @@ export function mountDadOMatic(element, backend) {
     root.classList.remove('is-punchline', 'has-punchline', 'is-sad');
     punch.classList.remove('show');
     badum.classList.remove('show');
-    verdict.textContent = 'Dad is loading a pun...';
+    verdict.textContent = `${who} is loading a pun...`;
     setNeedle(0.5);
 
     root.classList.add('is-thinking');
@@ -468,17 +580,19 @@ export function mountDadOMatic(element, backend) {
       // The backend writes (and stores) the joke; Dad mutters while it does.
       setupText.textContent = 'Hmm, let me think of a good one...';
       try {
-        joke = await backend.nextJoke(category);
+        joke = await backend.nextJoke(category, persona);
       } catch (e) {
-        machineError.textContent = `Dad's joke engine stalled: ${e.message}`;
+        if (my !== gen) return;
+        machineError.textContent = `${who}'s joke engine stalled: ${e.message}`;
         root.classList.remove('is-thinking');
-        setupText.textContent = randomDadLine();
+        setupText.textContent = P().line();
         verdict.textContent = 'Pull the lever to try again.';
         lever.disabled = pull.disabled = false;
         busy = false;
         return;
       }
-      current = { ...joke, saving: Promise.resolve(joke.id) };
+      if (my !== gen) return;
+      current = { ...joke, persona, saving: Promise.resolve(joke.id) };
     } else {
       joke = generateJoke(category, told);
       current = { ...joke, id: null };
@@ -493,18 +607,25 @@ export function mountDadOMatic(element, backend) {
     }
     told.add(joke.setup);
 
-    await typeOut(joke.setup);
+    await typeOut(joke.setup, my);
+    if (my !== gen) return;
     root.classList.remove('is-thinking');
 
     // Dad waits for the audience to ask for it.
-    verdict.textContent = 'Go on, ask Dad for the punchline...';
+    verdict.textContent = `Go on, ask ${who} for the punchline...`;
     reveal.hidden = false;
     reveal.focus({ preventScroll: true });
-    await new Promise((resolve) => (reveal.onclick = resolve));
+    await new Promise((resolve) => {
+      reveal.onclick = resolve;
+      cancelReveal = resolve;
+    });
+    cancelReveal = null;
+    if (my !== gen) return;
     reveal.hidden = true;
 
     root.classList.add('is-drumroll');
     await wait(900);
+    if (my !== gen) return;
     root.classList.remove('is-drumroll');
 
     punch.textContent = joke.punchline;
@@ -513,10 +634,10 @@ export function mountDadOMatic(element, backend) {
     punch.classList.add('show');
     badum.classList.add('show');
     root.classList.add('is-punchline', 'has-punchline');
-    confetti(root, ['😂', '🥁', '👔', '🤣', '💥', '🧔']);
+    confetti(root, ['😂', '🥁', P().floaters[0], '🤣', '💥', P().confetti]);
     verdict.textContent = joke.reusedFrom
       ? '🔁 Encore! A repeat from the joke bank, by popular demand. Rate it again.'
-      : 'How bad was it? Be honest. Dad can take it.';
+      : `How bad was it? Be honest. ${who} can take it.`;
 
     levelButtons.forEach((b) => (b.disabled = false));
     lever.disabled = pull.disabled = false;
@@ -525,15 +646,14 @@ export function mountDadOMatic(element, backend) {
   }
 
   async function rate(level) {
-    if (!current) return;
+    if (!current || current.level === level.key) return;
     const joke = current;
-    levelButtons.forEach((b, i) => {
-      b.disabled = true;
-      b.classList.toggle('chosen', GROAN_LEVELS[i] === level);
-    });
+    const changing = joke.level != null;
+    joke.level = level.key;
+    levelButtons.forEach((b, i) => b.classList.toggle('chosen', GROAN_LEVELS[i] === level));
     setNeedle(level.score);
     root.classList.toggle('is-sad', level.score === 1);
-    verdict.textContent = `${level.emoji} ${level.quip}`;
+    verdict.textContent = `${level.emoji} ${P().quip(level)}`;
     verdict.classList.remove('pop');
     void verdict.offsetWidth;
     verdict.classList.add('pop');
@@ -541,8 +661,12 @@ export function mountDadOMatic(element, backend) {
     try {
       const id = joke.id ?? (await joke.saving);
       if (!id) throw new Error('the joke was not filed');
-      await backend.rateJoke(id, level);
-      verdict.textContent += `  (+${level.score * 10} Dad Points, filed in ${backend.place})`;
+      await backend.rateJoke(id, level, joke.persona ?? 'dad');
+      if (joke !== current || joke.level !== level.key) return; // switched, or tapped again
+      const points = `${level.score * 10} ${P().who} Points`;
+      verdict.textContent += changing
+        ? `  (Rating changed: ${points}.)`
+        : `  (+${points}, filed in ${backend.place}. Tap another to change it.)`;
       refresh();
     } catch (e) {
       machineError.textContent = `The Groan-o-Meter jammed: ${e.message}`;

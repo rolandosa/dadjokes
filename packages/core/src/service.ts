@@ -4,8 +4,8 @@ import type { CategoryKey } from './jokes.js';
 import { externalKey, splitJoke } from './external.js';
 import type { ExternalJokes, Llm, Repo } from './ports.js';
 import { fingerprints } from './fingerprint.js';
-import { JOKE_SYSTEM, jokeUserMessage, parseJokeReplies } from './prompts/joke.js';
-import type { Board, ToldJoke } from './types.js';
+import { jokeSystem, jokeUserMessage, parseJokeReplies } from './prompts/joke.js';
+import type { Board, Persona, ToldJoke } from './types.js';
 
 /** How many jokes each list on the page shows. */
 export const BOARD_SIZE = 8;
@@ -79,6 +79,8 @@ export interface NewJokeOptions {
   externalShare?: number;
   /** Categories this caller offers; a request for any other is treated as "Surprise me". */
   categories?: readonly CategoryKey[];
+  /** Who tells the joke; sets the prompt (SPEC "Mom mode"). The repo is already that persona's. */
+  persona?: Persona;
   now?: Date;
   random?: () => number;
 }
@@ -231,7 +233,7 @@ export async function newJoke(
       try {
         const avoid = [...rejected, ...recent];
         candidates = parseJokeReplies(
-          await llm.joke(JOKE_SYSTEM, jokeUserMessage(CATEGORIES[pick].topic, avoid)),
+          await llm.joke(jokeSystem(opts.persona), jokeUserMessage(CATEGORIES[pick].topic, avoid)),
         );
       } catch {
         source = 'library-llm-error';
@@ -295,7 +297,11 @@ export async function rateJoke(repo: Repo, id: unknown, levelKey: unknown): Prom
   if (!level) throw new BadInput('unknown groan level');
   const result = await repo.rateJoke(id, level);
   if (result === 'missing') throw new NotFound('no such joke');
-  if (result === 'already') throw new Conflict('already rated');
+  if (result === 'rated') return;
+  // Already rated: the visitor changed their mind (SPEC "Rating"), so move it.
+  const changed = await repo.changeRating(id, level);
+  if (changed === 'missing') throw new NotFound('no such joke');
+  if (changed !== 'changed') throw new Conflict('the rating changed meanwhile, try again');
 }
 
 /**

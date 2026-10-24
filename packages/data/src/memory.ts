@@ -1,13 +1,34 @@
 import type { GroanLevel } from '@dadjokes/core/jokes';
 import type { Repo } from '@dadjokes/core/ports';
-import type { Board, ToldJoke } from '@dadjokes/core/types';
+import type { Board, Persona, ToldJoke } from '@dadjokes/core/types';
 
-/** An in-process Repo with DynamoRepo's behaviour, for `pnpm dev` and unit tests. */
-export function memoryRepo(): Repo {
+/** What every persona shares in DynamoRepo too: model calls, external claims, fingerprints. */
+interface Shared {
+  aiCalls: Map<string, number>;
+  usedExternal: Set<string>;
+  seen: Set<string>;
+}
+
+/**
+ * In-process storage with DynamoRepo's behaviour, for `pnpm dev` and unit tests: one Repo per
+ * persona, sharing what DynamoRepo shares.
+ */
+export function memoryStore(): { repoFor(persona: Persona): Repo } {
+  const shared: Shared = { aiCalls: new Map(), usedExternal: new Set(), seen: new Set() };
+  const repos = new Map<Persona, Repo>();
+  return {
+    repoFor(persona) {
+      if (!repos.has(persona)) repos.set(persona, personaRepo(shared));
+      return repos.get(persona)!;
+    },
+  };
+}
+
+/** A fresh store's Dad repo. */
+export const memoryRepo = (): Repo => memoryStore().repoFor('dad');
+
+function personaRepo({ aiCalls, usedExternal, seen }: Shared): Repo {
   const jokes = new Map<string, ToldJoke>();
-  const aiCalls = new Map<string, number>();
-  const usedExternal = new Set<string>();
-  const seen = new Set<string>();
   // DynamoRepo's STATS counters for encores.
   let bank = 0;
   let sinceReuse: number | undefined;
@@ -43,6 +64,14 @@ export function memoryRepo(): Repo {
       joke.level = level.key;
       joke.score = level.score;
       return 'rated';
+    },
+    async changeRating(id: string, level: GroanLevel) {
+      const joke = jokes.get(id);
+      if (!joke) return 'missing';
+      if (joke.score == null) return 'unrated';
+      joke.level = level.key;
+      joke.score = level.score;
+      return 'changed';
     },
     async board(limit: number): Promise<Board> {
       const all = [...jokes.values()].sort((a, b) => (a.id < b.id ? 1 : -1));

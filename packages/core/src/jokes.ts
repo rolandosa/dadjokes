@@ -220,6 +220,8 @@ export interface GroanLevel {
   label: string;
   emoji: string;
   quip: string;
+  /** The same reaction from Mom (Mom mode). */
+  momQuip: string;
 }
 
 export const GROAN_LEVELS: readonly GroanLevel[] = [
@@ -229,6 +231,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     label: 'Polite Nod',
     emoji: '😐',
     quip: 'Dad is concerned. Dad is going to try harder.',
+    momQuip: 'Mom is not mad, just disappointed. She will try harder.',
   },
   {
     score: 2,
@@ -236,6 +239,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     label: 'Eye Roll',
     emoji: '🙄',
     quip: 'An eye roll! The dad engine is warming up.',
+    momQuip: 'Did you just roll your eyes at your mother? Progress.',
   },
   {
     score: 3,
@@ -243,6 +247,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     label: 'Audible Groan',
     emoji: '😩',
     quip: 'A real groan. Dad does a small victory lap around the grill.',
+    momQuip: 'A real groan. Mom adds it to the family group chat.',
   },
   {
     score: 4,
@@ -250,6 +255,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     label: 'Full Facepalm',
     emoji: '🤦',
     quip: 'FACEPALM! Dad updates his LinkedIn: "Professional Punsmith".',
+    momQuip: 'FACEPALM! Mom is telling this one at every family dinner now.',
   },
   {
     score: 5,
@@ -257,6 +263,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     label: 'Left the Room',
     emoji: '🚪',
     quip: 'You physically left. This is the highest honour a dad can receive.',
+    momQuip: 'You left the room. Mom will be here when you get back. With another one.',
   },
 ];
 
@@ -273,3 +280,15 @@ export const DAD_LINES = [
 ];
 
 export const randomDadLine = (): string => DAD_LINES[Math.floor(Math.random() * DAD_LINES.length)]!;
+
+/** Mom's idle lines (Mom mode). */
+export const MOM_LINES = [
+  'Because I said so.',
+  'Ask your father.',
+  'Did you eat? You look like you need a joke.',
+  "I'm not yelling, I'm projecting the punchline.",
+  'Put a jacket on, this one is cold.',
+  'Who left this pun on the floor?',
+];
+
+export const randomMomLine = (): string => MOM_LINES[Math.floor(Math.random() * MOM_LINES.length)]!;

@@ -97,6 +97,7 @@ describe('encores', () => {
         label: '',
         emoji: '',
         quip: '',
+        momQuip: '',
       }) as const;
     for (const j of first) await repo.rateJoke(j.id, level(j.id === star.id ? 5 : 1));
 

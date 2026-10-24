@@ -980,3 +980,63 @@
 .djg-pull {
   scroll-margin-bottom: 16px;
 }
+
+/* Dad | Mom toggle, in the banner above the title (SPEC "Mom mode"). */
+.djg-modes {
+  display: inline-flex;
+  margin-bottom: 6px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--cream);
+  box-shadow: 0 3px 0 var(--ink);
+}
+.djg-mode {
+  font:
+    900 15px 'Nunito',
+    system-ui,
+    sans-serif;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  padding: 5px 16px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.djg-mode + .djg-mode {
+  border-left: 3px solid var(--ink);
+}
+.djg-mode[aria-pressed='true'] {
+  background: var(--sun);
+}
+.djg-mode:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: -5px;
+}
+
+/* Mom mode: the same machine in her colours. */
+.djg.is-mom {
+  --cherry: #c2255c;
+  --tang: #e8590c;
+  --sky: #9775fa;
+  --mint: #f783ac;
+  --cream: #fff0f6;
+  background: linear-gradient(135deg, #ffc9de, #ffe3ec, #e5dbff, #d0bfff, #fcc2d7, #ffd8a8);
+  background-size: 400% 400%;
+}
+.djg.is-mom .djg-bulbs i {
+  background: #ffe3f1;
+  box-shadow: 0 0 8px #faa2c1;
+}
+
+/* Which way the scale runs, over the five levels. */
+.djg-scale {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}

@@ -11,6 +11,11 @@ export interface Repo {
    * before; a joke's rating never changes.
    */
   rateJoke(id: string, level: GroanLevel): Promise<'rated' | 'missing' | 'already'>;
+  /** Moves a rated joke to another level; 'conflict' when its rating changed meanwhile. */
+  changeRating(
+    id: string,
+    level: GroanLevel,
+  ): Promise<'changed' | 'missing' | 'unrated' | 'conflict'>;
   board(limit: number): Promise<Board>;
   /** Setups of the most recently told jokes, newest first. */
   recentSetups(limit: number): Promise<string[]>;

@@ -1,3 +1,5 @@
+import type { Persona } from '../types.js';
+
 /**
  * The joke-writing prompt (SPEC "Joke generation"). Each call asks for JOKES_PER_CALL different
  * jokes, so a repeat can be skipped without another call; parseJokeReplies keeps the valid ones.
@@ -11,9 +13,7 @@ export const JOKE_MAX_TOKENS = 500;
 /** Some variety, unlike Pantry's parses: pulling the lever again should give a new joke. */
 export const JOKE_TEMPERATURE = 1;
 
-export const JOKE_SYSTEM = `You write three brand-new dad jokes for the Dad-O-Matic 3000, a joke page shared among colleagues at a software company.
-
-The user message is JSON: {"topic": string, "avoid": string[]}. "avoid" lists setups already told.
+const RULES = `The user message is JSON: {"topic": string, "avoid": string[]}. "avoid" lists setups already told.
 
 Return ONLY a JSON object with no other text:
 {"jokes": [{"setup": string, "punchline": string}, {"setup": string, "punchline": string}, {"setup": string, "punchline": string}]}
@@ -27,6 +27,25 @@ Rules:
 - None is one of the "avoid" setups, or a close rewording of one.
 - setup: at most 140 characters. punchline: at most 120 characters. Plain text, one line each, no emoji, no quotation marks around the whole thing.
 - Leave out any joke that would break a rule; if none follows every rule, return {"jokes": []}.`;
+
+/**
+ * The system prompt for a persona (SPEC "Mom mode"). Mom tells the same kind of joke as Dad:
+ * groan-worthy puns, from a mom's point of view, never "yo mama" jokes.
+ */
+export function jokeSystem(persona: Persona = 'dad'): string {
+  if (persona === 'mom') {
+    return `You write three brand-new mom jokes for the Mom-O-Matic 3000, a joke page shared among colleagues at a software company.
+
+A mom joke is a dad joke told by Mom: the same short setup and groan-worthy pun, often from a mom's point of view (laundry, snacks, car pools, "because I said so"). Never a "yo mama" joke, and never mocking mothers or anyone else.
+
+${RULES}`;
+  }
+  return `You write three brand-new dad jokes for the Dad-O-Matic 3000, a joke page shared among colleagues at a software company.
+
+${RULES}`;
+}
+
+export const JOKE_SYSTEM = jokeSystem('dad');
 
 export interface JokeTopic {
   /** What the prompt asks the joke to be about. */

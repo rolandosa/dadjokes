@@ -101,14 +101,26 @@ describe('newJoke', () => {
 });
 
 describe('rateJoke', () => {
-  it('rates once and updates the board', async () => {
+  it('rates and updates the board, and a second rating changes it', async () => {
     const repo = memoryRepo();
     const { joke } = await newJoke(repo, llmSaying(GOOD), 'classic', { dailyCap: 10 });
     await rateJoke(repo, joke.id, 'left_the_room');
     const b = await board(repo);
     expect(b.top[0]).toMatchObject({ id: joke.id, level: 'left_the_room', score: 5 });
     expect(b.stats).toEqual({ told: 1, rated: 1, avg: 5 });
-    await expect(rateJoke(repo, joke.id, 'eye_roll')).rejects.toBeInstanceOf(Conflict);
+    await rateJoke(repo, joke.id, 'eye_roll');
+    const after = await board(repo);
+    expect(after.top).toHaveLength(1);
+    expect(after.top[0]).toMatchObject({ id: joke.id, level: 'eye_roll', score: 2 });
+    expect(after.stats).toEqual({ told: 1, rated: 1, avg: 2 });
+  });
+
+  it('reports a lost race as a conflict', async () => {
+    const repo = memoryRepo();
+    const { joke } = await newJoke(repo, llmSaying(GOOD), 'classic', { dailyCap: 10 });
+    await rateJoke(repo, joke.id, 'eye_roll');
+    const racing = { ...repo, changeRating: async () => 'conflict' as const };
+    await expect(rateJoke(racing, joke.id, 'audible_groan')).rejects.toBeInstanceOf(Conflict);
   });
 
   it('rejects unknown ids and levels', async () => {

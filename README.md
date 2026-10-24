@@ -34,7 +34,11 @@ from Vault on 2026-10-24 and is kept as code only: do not deploy it without the 
   | 4     | 🤦 Full Facepalm | LinkedIn updated: "Professional Punsmith". |
   | 5     | 🚪 Left the Room | The highest honour a dad can receive.      |
 
+  Higher is better: the groan is the point. Changed your mind? Tap another level.
+
 - **Hall of Groans** (top-rated) and **Fresh Off the Grill** (latest), shared by everyone.
+- **Mom mode.** A Dad | Mom toggle in the banner (or `?mode=mom`): Mom tells mom jokes, in her
+  own colours, with her own Hall of Groans and stats. She never repeats a joke Dad told.
 
 ## Layout
 

@@ -3,8 +3,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { FnUrlEvent, FnUrlResult } from '@dadjokes/core/http';
 import { nodeToEvent, writeResult } from '@dadjokes/core/http/node';
 import type { Llm } from '@dadjokes/core/ports';
-import { handler, setExternal, setLlm, setRepo } from '@dadjokes/api';
-import { memoryRepo } from '@dadjokes/data/memory';
+import { handler, setExternal, setLlm, setRepoFor } from '@dadjokes/api';
+import { memoryStore } from '@dadjokes/data/memory';
 
 /**
  * `pnpm dev` (SPEC "Local"): fn-api on API_PORT behind a Node server; the site's Vite
@@ -16,7 +16,8 @@ import { memoryRepo } from '@dadjokes/data/memory';
 const apiPort = Number(process.env.API_PORT ?? 8807);
 
 if ((process.env.STORE ?? 'memory') === 'memory') {
-  setRepo(memoryRepo());
+  const store = memoryStore();
+  setRepoFor((persona) => store.repoFor(persona));
   console.log('STORE=memory: jokes last until this server stops.');
 }
 

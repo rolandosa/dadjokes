@@ -3,6 +3,8 @@ import type { FnUrlEvent, FnUrlResult, RouteDef } from '@dadjokes/core/http';
 import { errName, log } from '@dadjokes/core/log';
 import { SITE_CATEGORIES } from '@dadjokes/core/jokes';
 import type { ExternalJokes, Llm, Repo } from '@dadjokes/core/ports';
+import { isPersona } from '@dadjokes/core/types';
+import type { Persona } from '@dadjokes/core/types';
 import { BadInput, Conflict, NotFound, board, newJoke, rateJoke } from '@dadjokes/core/service';
 import { DynamoRepo } from '@dadjokes/data/repo';
 import { sharedClient, tableName } from '@dadjokes/data/client';
@@ -24,12 +26,20 @@ const ROUTES: readonly RouteDef[] = [
 
 const NO_STORE = { 'cache-control': 'no-store' };
 
-let repo: Repo | undefined;
-/** Swaps the store (memory for `pnpm dev` and tests). */
-export function setRepo(r: Repo): void {
-  repo = r;
+let repoFor: ((persona: Persona) => Repo) | undefined;
+/** Swaps the store (memory for `pnpm dev` and tests): one Repo per persona (SPEC "Mom mode"). */
+export function setRepoFor(f: (persona: Persona) => Repo): void {
+  repoFor = f;
 }
-const getRepo = (): Repo => (repo ??= new DynamoRepo(sharedClient(), tableName()));
+const dynamoRepos = new Map<Persona, Repo>();
+const getRepo = (persona: Persona): Repo => {
+  if (repoFor) return repoFor(persona);
+  if (!dynamoRepos.has(persona))
+    dynamoRepos.set(persona, new DynamoRepo(sharedClient(), tableName(), persona));
+  return dynamoRepos.get(persona)!;
+};
+/** The persona a request names; anything else is Dad. */
+const personaOf = (v: unknown): Persona => (isPersona(v) ? v : 'dad');
 
 let llm: Llm | null | undefined;
 /** Swaps the joke writer; null means library jokes only (`pnpm dev` without Bedrock). */
@@ -65,10 +75,15 @@ function parse(event: FnUrlEvent): Record<string, unknown> {
 
 async function dispatch(event: FnUrlEvent, name: string, params: Record<string, string>) {
   switch (name) {
-    case 'board':
-      return json(200, await board(getRepo(), SITE_CATEGORIES), NO_STORE);
+    case 'board': {
+      const persona = personaOf(new URLSearchParams(event.rawQueryString ?? '').get('persona'));
+      return json(200, await board(getRepo(persona), SITE_CATEGORIES), NO_STORE);
+    }
     case 'new': {
-      const { joke, source } = await newJoke(getRepo(), getLlm(), parse(event).category, {
+      const body = parse(event);
+      const persona = personaOf(body.persona);
+      const { joke, source } = await newJoke(getRepo(persona), getLlm(), body.category, {
+        persona,
         dailyCap: dailyCap(),
         categories: SITE_CATEGORIES,
         external: getExternal(),
@@ -77,9 +92,11 @@ async function dispatch(event: FnUrlEvent, name: string, params: Record<string, 
       log({ fn: 'api', outcome: `joke-${source}` });
       return json(201, joke, NO_STORE);
     }
-    case 'rate':
-      await rateJoke(getRepo(), params.id, parse(event).level);
+    case 'rate': {
+      const body = parse(event);
+      await rateJoke(getRepo(personaOf(body.persona)), params.id, body.level);
       return { statusCode: 204, headers: NO_STORE };
+    }
     default:
       return text(404);
   }

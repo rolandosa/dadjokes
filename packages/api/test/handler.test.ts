@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { FnUrlEvent } from '@dadjokes/core/http';
-import { memoryRepo } from '@dadjokes/data/memory';
-import { handler, setExternal, setLlm, setRepo } from '../src/handler.js';
+import { memoryStore } from '@dadjokes/data/memory';
+import { handler, setExternal, setLlm, setRepoFor } from '../src/handler.js';
 
 function ev(method: string, path: string, body?: unknown): FnUrlEvent {
   return {
@@ -16,7 +16,8 @@ function ev(method: string, path: string, body?: unknown): FnUrlEvent {
 }
 
 beforeEach(() => {
-  setRepo(memoryRepo());
+  const store = memoryStore();
+  setRepoFor((persona) => store.repoFor(persona));
   // Never the real icanhazdadjoke.com in tests: the joke must come from the fake writer below.
   setExternal(null);
   setLlm({
@@ -27,7 +28,7 @@ beforeEach(() => {
 });
 
 describe('fn-api', () => {
-  it('writes a joke, rates it, and shows it on the board', async () => {
+  it('writes a joke, rates it, changes the rating, and shows it on the board', async () => {
     const made = await handler(ev('POST', '/api/jokes', { category: 'animals' }));
     expect(made.statusCode).toBe(201);
     const joke = JSON.parse(made.body!) as { id: string; setup: string };
@@ -38,12 +39,12 @@ describe('fn-api', () => {
     );
     expect(rated.statusCode).toBe(204);
     const again = await handler(ev('POST', `/api/jokes/${joke.id}/rating`, { level: 'eye_roll' }));
-    expect(again.statusCode).toBe(409);
+    expect(again.statusCode).toBe(204);
 
     const b = await handler(ev('GET', '/api/board'));
     expect(b.headers?.['cache-control']).toBe('no-store');
     const body = JSON.parse(b.body!) as { top: Array<{ score: number }>; stats: { told: number } };
-    expect(body.top[0]!.score).toBe(4);
+    expect(body.top.map((j) => j.score)).toEqual([2]);
     expect(body.stats.told).toBe(1);
   });
 

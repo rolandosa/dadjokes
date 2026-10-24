@@ -7,6 +7,7 @@ mountDadOMatic(document.getElementById('app'), {
   categories: SITE_CATEGORIES,
   rateJoke,
   loadBoard,
+  moms: true,
   place: 'the Hall of Groans',
   tagline: 'Every joke is filed for posterity. Rate responsibly.',
 });

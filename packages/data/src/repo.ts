@@ -12,8 +12,8 @@ import {
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type { GroanLevel } from '@dadjokes/core/jokes';
 import type { Repo } from '@dadjokes/core/ports';
-import type { Board, ToldJoke } from '@dadjokes/core/types';
-import { EXT, FEED, SEEN, STATS, TOP, aiCallsSk, feedSk, topSk } from './keys.js';
+import type { Board, Persona, ToldJoke } from '@dadjokes/core/types';
+import { EXT, SEEN, STATS, aiCallsSk, feedSk, partitions, topSk } from './keys.js';
 
 const JOKE_FIELDS = [
   'id',
@@ -34,10 +34,21 @@ function toJoke(item: Record<string, unknown>): ToldJoke {
 }
 
 export class DynamoRepo implements Repo {
+  private readonly feed: string;
+  private readonly top: string;
+  private readonly statsKey: { PK: string; SK: string };
+
+  /** One persona's jokes (SPEC "Mom mode"); fingerprints, external claims and the AI cap are shared. */
   constructor(
     private readonly db: DynamoDBDocumentClient,
     private readonly table: string,
-  ) {}
+    persona: Persona = 'dad',
+  ) {
+    const p = partitions(persona);
+    this.feed = p.feed;
+    this.top = p.top;
+    this.statsKey = { PK: STATS, SK: p.statsSk };
+  }
 
   async addJoke(joke: ToldJoke): Promise<void> {
     // An unrated joke has no level/score attributes at all (not NULLs), so rateJoke's
@@ -51,14 +62,14 @@ export class DynamoRepo implements Repo {
           {
             Put: {
               TableName: this.table,
-              Item: { PK: FEED, SK: feedSk(joke.id), ...row },
+              Item: { PK: this.feed, SK: feedSk(joke.id), ...row },
               ConditionExpression: 'attribute_not_exists(PK)',
             },
           },
           {
             Update: {
               TableName: this.table,
-              Key: { PK: STATS, SK: STATS },
+              Key: this.statsKey,
               // bank: originals stored; sinceReuse: originals since the last encore.
               UpdateExpression: reusedFrom
                 ? 'ADD told :one, reused :one'
@@ -76,7 +87,7 @@ export class DynamoRepo implements Repo {
       await this.db.send(
         new UpdateCommand({
           TableName: this.table,
-          Key: { PK: STATS, SK: STATS },
+          Key: this.statsKey,
           UpdateExpression: 'SET sinceReuse = :zero',
           ConditionExpression:
             'bank > :minBank AND (attribute_not_exists(sinceReuse) OR sinceReuse >= :gap)',
@@ -95,7 +106,7 @@ export class DynamoRepo implements Repo {
       new QueryCommand({
         TableName: this.table,
         KeyConditionExpression: 'PK = :pk',
-        ExpressionAttributeValues: { ':pk': FEED },
+        ExpressionAttributeValues: { ':pk': this.feed },
         ProjectionExpression: 'id',
         Limit: 1,
       }),
@@ -110,7 +121,7 @@ export class DynamoRepo implements Repo {
         TableName: this.table,
         KeyConditionExpression: 'PK = :pk AND SK >= :from',
         FilterExpression: 'attribute_not_exists(reusedFrom)',
-        ExpressionAttributeValues: { ':pk': FEED, ':from': feedSk(fromId) },
+        ExpressionAttributeValues: { ':pk': this.feed, ':from': feedSk(fromId) },
         Limit: limit,
       }),
     );
@@ -118,7 +129,7 @@ export class DynamoRepo implements Repo {
   }
 
   async rateJoke(id: string, level: GroanLevel): Promise<'rated' | 'missing' | 'already'> {
-    const key = { PK: FEED, SK: feedSk(id) };
+    const key = { PK: this.feed, SK: feedSk(id) };
     const found = await this.db.send(new GetCommand({ TableName: this.table, Key: key }));
     if (!found.Item) return 'missing';
     if (found.Item.score != null) return 'already';
@@ -147,13 +158,13 @@ export class DynamoRepo implements Repo {
             {
               Put: {
                 TableName: this.table,
-                Item: { PK: TOP, SK: topSk(level.score, id), ...rated },
+                Item: { PK: this.top, SK: topSk(level.score, id), ...rated },
               },
             },
             {
               Update: {
                 TableName: this.table,
-                Key: { PK: STATS, SK: STATS },
+                Key: this.statsKey,
                 UpdateExpression: 'ADD rated :one, groans :score',
                 ExpressionAttributeValues: { ':one': 1, ':score': level.score },
               },
@@ -168,6 +179,61 @@ export class DynamoRepo implements Repo {
     return 'rated';
   }
 
+  async changeRating(
+    id: string,
+    level: GroanLevel,
+  ): Promise<'changed' | 'missing' | 'unrated' | 'conflict'> {
+    const key = { PK: this.feed, SK: feedSk(id) };
+    const found = await this.db.send(new GetCommand({ TableName: this.table, Key: key }));
+    if (!found.Item) return 'missing';
+    const old = found.Item.score;
+    if (typeof old !== 'number') return 'unrated';
+    if (old === level.score) return 'changed';
+    const rated = { ...toJoke(found.Item), level: level.key, score: level.score };
+    try {
+      await this.db.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Update: {
+                TableName: this.table,
+                Key: key,
+                UpdateExpression: 'SET #level = :level, score = :score',
+                // Two changes racing: the one that read a stale score loses, so groans stay right.
+                ConditionExpression: 'score = :old',
+                ExpressionAttributeNames: { '#level': 'level' },
+                ExpressionAttributeValues: {
+                  ':level': level.key,
+                  ':score': level.score,
+                  ':old': old,
+                },
+              },
+            },
+            { Delete: { TableName: this.table, Key: { PK: this.top, SK: topSk(old, id) } } },
+            {
+              Put: {
+                TableName: this.table,
+                Item: { PK: this.top, SK: topSk(level.score, id), ...rated },
+              },
+            },
+            {
+              Update: {
+                TableName: this.table,
+                Key: this.statsKey,
+                UpdateExpression: 'ADD groans :delta',
+                ExpressionAttributeValues: { ':delta': level.score - old },
+              },
+            },
+          ],
+        }),
+      );
+    } catch (err) {
+      if (err instanceof TransactionCanceledException) return 'conflict';
+      throw err;
+    }
+    return 'changed';
+  }
+
   async board(limit: number): Promise<Board> {
     const newest = (pk: string) =>
       this.db.send(
@@ -180,9 +246,9 @@ export class DynamoRepo implements Repo {
         }),
       );
     const [top, recent, stats] = await Promise.all([
-      newest(TOP),
-      newest(FEED),
-      this.db.send(new GetCommand({ TableName: this.table, Key: { PK: STATS, SK: STATS } })),
+      newest(this.top),
+      newest(this.feed),
+      this.db.send(new GetCommand({ TableName: this.table, Key: this.statsKey })),
     ]);
     const told = Number(stats.Item?.told ?? 0);
     const rated = Number(stats.Item?.rated ?? 0);
@@ -199,7 +265,7 @@ export class DynamoRepo implements Repo {
       new QueryCommand({
         TableName: this.table,
         KeyConditionExpression: 'PK = :pk',
-        ExpressionAttributeValues: { ':pk': FEED },
+        ExpressionAttributeValues: { ':pk': this.feed },
         ProjectionExpression: 'setup',
         ScanIndexForward: false,
         Limit: limit,

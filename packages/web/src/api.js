@@ -1,4 +1,5 @@
 // The site's backend: fn-api behind the same origin at /api (SPEC "API"). No login.
+// `persona` is 'dad' or 'mom' (SPEC "Mom mode"): each has her own jokes and Hall of Groans.
 
 async function call(path, init) {
   const res = await fetch(`/api${path}`, {
@@ -12,14 +13,14 @@ async function call(path, init) {
 }
 
 /** A brand-new joke, written by the model (or from the library as a fallback) and stored. */
-export const nextJoke = (category) =>
-  call('/jokes', { method: 'POST', body: JSON.stringify({ category }) });
+export const nextJoke = (category, persona = 'dad') =>
+  call('/jokes', { method: 'POST', body: JSON.stringify({ category, persona }) });
 
-export async function rateJoke(id, level) {
+export async function rateJoke(id, level, persona = 'dad') {
   await call(`/jokes/${encodeURIComponent(id)}/rating`, {
     method: 'POST',
-    body: JSON.stringify({ level: level.key }),
+    body: JSON.stringify({ level: level.key, persona }),
   });
 }
 
-export const loadBoard = () => call('/board');
+export const loadBoard = (persona = 'dad') => call(`/board?persona=${encodeURIComponent(persona)}`);

@@ -37,8 +37,10 @@ used by Pantry (provisioned 15 RCU / 25 WCU) and OurToDos (5/5).
 
 A joke row holds `id, key` (`<category>:<n>` library, `ai`, or `ext:<source>:<id>`), `category, setup, punchline, toldAt`, plus `level, score` once rated
 and `reusedFrom` (the original's id) when it is an encore.
-An unrated row has no `level`/`score` attributes (not NULLs); rating is conditional on
-`score` being absent, so a joke is rated at most once and the counters stay exact.
+An unrated row has no `level`/`score` attributes (not NULLs); a first rating is conditional on
+`score` being absent, so `rated` counts each joke once. Mom's jokes use `MOM#FEED`, `MOM#TOP`
+and `STATS`/`MOM` in place of `FEED`, `TOP` and `STATS`/`STATS` (see "Mom mode"); `SEEN`, `EXT#`
+claims and the `AI#` day counts are shared.
 
 ## Service
 
@@ -51,8 +53,9 @@ An unrated row has no `level`/`score` attributes (not NULLs); rating is conditio
   passed, the call throws or the reply breaks the rules. The source is logged as
   `joke-encore`, `joke-ai`, `joke-library-cap`, `joke-library-bad-reply`, `joke-library-llm-error` or
   `joke-library-no-llm`.
-- `rateJoke(repo, id, level)`: `NotFound` for an unknown id, `BadInput` for an unknown level,
-  `Conflict` when already rated.
+- `rateJoke(repo, id, level)`: `NotFound` for an unknown id, `BadInput` for an unknown level.
+  A joke already rated has its rating changed (see "Rating"); `Conflict` only when another
+  change landed between the read and the write.
 - `board(repo)`: the 8 top-rated jokes, the 8 newest, and the stats.
 
 Joke text never comes from a request: it is written by the model or taken from the library.
@@ -123,16 +126,45 @@ transaction); a key claimed before means a repeat.
 - Cap: `AI_DAILY_CAP` model calls per UTC day (CDK context `aiDailyCap`, default 500). Past it,
   the lever keeps working with library jokes.
 
+## Rating
+
+Five levels, worst joke to best: 😐 Polite Nod (1), 🙄 Eye Roll (2), 😩 Audible Groan (3),
+🤦 Full Facepalm (4), 🚪 Left the Room (5). The score measures the groan, and the groan is the
+point of a dad joke, so a higher score is a better joke: the Hall of Groans lists the highest
+first, and Dad (or Mom) frowns at a Polite Nod. "← Weak" and "Groan-worthy (best) →" sit over
+the buttons because visitors read "Left the Room" as the worst.
+
+The buttons stay live after a rating: tapping another level changes it. `changeRating` sets the
+new level on the joke row only if its score is still the one it read, moves the `TOP` row
+(delete `<old>#<ulid>`, put `<new>#<ulid>`) and adds the difference to `groans`, in one
+transaction; `rated` is unchanged.
+
+## Mom mode
+
+A Dad | Mom toggle in the banner (public site only, `moms: true`). The choice is kept in
+`localStorage` (`djg-persona`); `?mode=mom` or `?mode=dad` in the link overrides it. Mom has:
+
+- her own look: `packages/ui/src/mom.js` (a drawn stand-in with Dad's five frames until her
+  puppet photos are cut out like his) and a pink/lavender theme (`.djg.is-mom`);
+- her own words: "MOM-O-MATIC 3000", `MOM_LINES`, each level's `momQuip`, "Mom Points";
+- her own jokes: the API takes `persona` (`dad` default, anything else is Dad) and the model gets
+  `jokeSystem('mom')`, mom jokes in a mom's voice, never "yo mama";
+- her own Hall of Groans, Fresh Off the Grill and stats (the partitions above).
+
+The no-repeat fingerprints are shared, so Mom never tells a joke Dad already told. Switching
+drops the joke on stage and loads the other board; a reply that arrives for the one you left is
+ignored.
+
 ## API
 
 `fn-api` on a Lambda Function URL, served by CloudFront under the site's origin at `/api/*`.
 
-| Method | Path                     | Body          | Answers                                    |
-| ------ | ------------------------ | ------------- | ------------------------------------------ |
-| GET    | `/api/healthz`           |               | 200 `{ok, version}`                        |
-| GET    | `/api/board`             |               | 200 `{top, recent, stats}`, `no-store`     |
-| POST   | `/api/jokes`             | `{category?}` | 201 the stored joke                        |
-| POST   | `/api/jokes/{id}/rating` | `{level}`     | 204; 400 bad level; 404 no joke; 409 rated |
+| Method | Path                     | Body                    | Answers                                                             |
+| ------ | ------------------------ | ----------------------- | ------------------------------------------------------------------- |
+| GET    | `/api/healthz`           |                         | 200 `{ok, version}`                                                 |
+| GET    | `/api/board?persona=`    |                         | 200 `{top, recent, stats}`, `no-store`                              |
+| POST   | `/api/jokes`             | `{category?, persona?}` | 201 the stored joke                                                 |
+| POST   | `/api/jokes/{id}/rating` | `{level, persona?}`     | 204 (rated or changed); 400 bad level; 404 no joke; 409 lost a race |
 
 Bodies over 4 KB answer 413 unread. Anything else is 404.
 

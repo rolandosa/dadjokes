@@ -31,7 +31,7 @@ afterAll(async () => {
 });
 
 describe('DynamoRepo (DynamoDB Local)', () => {
-  it('stores, rates once, ranks and counts', async () => {
+  it('stores, rates, changes a rating, ranks and counts', async () => {
     const a = joke('first');
     const b = joke('second');
     await repo.addJoke(a);
@@ -39,12 +39,16 @@ describe('DynamoRepo (DynamoDB Local)', () => {
     expect(await repo.rateJoke(a.id, GROAN_LEVELS[4]!)).toBe('rated');
     expect(await repo.rateJoke(b.id, GROAN_LEVELS[1]!)).toBe('rated');
     expect(await repo.rateJoke(a.id, GROAN_LEVELS[0]!)).toBe('already');
+    expect(await repo.changeRating(a.id, GROAN_LEVELS[2]!)).toBe('changed');
+    expect(await repo.changeRating(ulid(), GROAN_LEVELS[2]!)).toBe('missing');
     expect(await repo.rateJoke(ulid(), GROAN_LEVELS[0]!)).toBe('missing');
 
     const board = await repo.board(8);
     expect(board.top.map((j) => j.setup)).toEqual(['first', 'second']);
     expect(board.recent.map((j) => j.setup)).toEqual(['second', 'first']);
-    expect(board.stats).toEqual({ told: 2, rated: 2, avg: 3.5 });
+    // The change moved "first" from 5 to 3 groans without leaving its old Hall of Groans row.
+    expect(board.top.map((j) => j.score)).toEqual([3, 2]);
+    expect(board.stats).toEqual({ told: 2, rated: 2, avg: 2.5 });
     expect(await repo.recentSetups(1)).toEqual(['second']);
   });
 
