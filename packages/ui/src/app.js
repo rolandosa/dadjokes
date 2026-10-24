@@ -282,6 +282,9 @@ export function mountDadOMatic(element, backend) {
     machineError,
   );
 
+  // Keeps the pull button where the visitor last tapped it: when the previous punchline and
+  // rating clear for the next joke, the space they took stays until new content fills it.
+  const spacer = el('div', { class: 'djg-spacer', 'aria-hidden': 'true' });
   const bubbles = el(
     'div',
     { class: 'djg-bubbles' },
@@ -290,6 +293,7 @@ export function mountDadOMatic(element, backend) {
     drum,
     punch,
     credit,
+    spacer,
     controls,
   );
   const theatre = el(
@@ -298,6 +302,27 @@ export function mountDadOMatic(element, backend) {
     el('div', { class: 'djg-theatre' }, dadHolder, bubbles, badum),
   );
   wrap.appendChild(el('div', { class: 'djg-stage' }, theatre));
+
+  let anchorTop = 0; // page y the controls should not move above, set at each pull
+  const pageTop = (e) => e.getBoundingClientRect().top + window.scrollY;
+  const holdControls = () => {
+    spacer.style.display = 'none';
+    const need = anchorTop - pageTop(controls);
+    if (need <= 0) return;
+    // On phones the bubbles' children are grid items of the card, so the gap is the card's.
+    const box = getComputedStyle(bubbles).display === 'contents' ? bubbles.parentElement : bubbles;
+    const gap = parseFloat(getComputedStyle(box).rowGap) || 0;
+    if (need <= gap) return;
+    spacer.style.display = 'block';
+    spacer.style.height = `${need - gap}px`;
+  };
+  spacer.style.display = 'none';
+  const watch = new ResizeObserver(holdControls);
+  [bubble, reveal, drum, punch, credit].forEach((e) => watch.observe(e));
+  window.addEventListener('resize', () => {
+    anchorTop = 0;
+    holdControls();
+  });
 
   // Groan-o-Meter
   const gaugeHolder = el('div');
@@ -336,10 +361,11 @@ export function mountDadOMatic(element, backend) {
   // screens it lives in the Groan-o-Meter panel. One set of buttons, moved between the two.
   const phone = window.matchMedia('(max-width: 560px)');
   const placeRating = () => {
-    if (phone.matches) bubbles.insertBefore(rating, controls);
+    if (phone.matches) bubbles.insertBefore(rating, spacer);
     else meterSlot.appendChild(rating);
   };
   placeRating();
+  watch.observe(rating);
   phone.addEventListener('change', placeRating);
 
   // Lists
@@ -417,6 +443,11 @@ export function mountDadOMatic(element, backend) {
   async function tellJoke() {
     if (busy) return;
     busy = true;
+    anchorTop = pageTop(controls);
+    // Pulled from further down the page: bring Dad's bubble back into view to read the setup.
+    if (bubble.getBoundingClientRect().top < 0) {
+      bubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     machineError.textContent = '';
     lever.disabled = pull.disabled = true;
     levelButtons.forEach((b) => {
@@ -468,7 +499,7 @@ export function mountDadOMatic(element, backend) {
     // Dad waits for the audience to ask for it.
     verdict.textContent = 'Go on, ask Dad for the punchline...';
     reveal.hidden = false;
-    reveal.focus();
+    reveal.focus({ preventScroll: true });
     await new Promise((resolve) => (reveal.onclick = resolve));
     reveal.hidden = true;
 
