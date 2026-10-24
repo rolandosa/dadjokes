@@ -228,32 +228,11 @@ export function mountDadOMatic(element, backend) {
     hidden: '',
     text: '👉 Hit me with it!',
   });
-  // Phones only (styles.css): the lever panel sits below the fold there.
-  const miniPull = el('button', {
-    class: 'djg-pull-mini',
-    type: 'button',
-    text: '🎰 Tell me a joke',
-    onclick: () => tellJoke(),
-  });
   const badum = el('div', { class: 'djg-badum', text: 'BA-DUM-TSS!' });
   const dadHolder = createDad();
-  const bubbles = el(
-    'div',
-    { class: 'djg-bubbles' },
-    bubble,
-    reveal,
-    drum,
-    punch,
-    credit,
-    miniPull,
-  );
-  const theatre = el(
-    'section',
-    { class: 'djg-panel' },
-    el('div', { class: 'djg-theatre' }, dadHolder, bubbles, badum),
-  );
 
-  // Machine
+  // The controls sit in the joke card, under the bubble: pick a topic and pull, read the setup,
+  // ask for the punchline, rate it, pull again, all in one place.
   const catButtons = [];
   const catRow = el('div', { class: 'djg-cats' });
   const addCat = (key, label) => {
@@ -294,16 +273,32 @@ export function mountDadOMatic(element, backend) {
     onclick: () => tellJoke(),
   });
   const machineError = el('div', { class: 'djg-error' });
-  const machine = el(
-    'section',
-    { class: 'djg-panel djg-machine' },
-    el('h2', { text: '🎛️ Pun Selector' }),
+  const controls = el(
+    'div',
+    { class: 'djg-controls' },
+    el('div', { class: 'djg-controls-label', text: 'Pick a topic, then pull:' }),
     catRow,
     el('div', { class: 'djg-lever-row' }, lever, pull),
     el('p', { class: 'djg-quote', text: backend.tagline }),
     machineError,
   );
-  wrap.appendChild(el('div', { class: 'djg-stage' }, theatre, machine));
+
+  const bubbles = el(
+    'div',
+    { class: 'djg-bubbles' },
+    bubble,
+    reveal,
+    drum,
+    punch,
+    credit,
+    controls,
+  );
+  const theatre = el(
+    'section',
+    { class: 'djg-panel' },
+    el('div', { class: 'djg-theatre' }, dadHolder, bubbles, badum),
+  );
+  wrap.appendChild(el('div', { class: 'djg-stage' }, theatre));
 
   // Groan-o-Meter
   const gaugeHolder = el('div');
@@ -342,7 +337,7 @@ export function mountDadOMatic(element, backend) {
   // screens it lives in the Groan-o-Meter panel. One set of buttons, moved between the two.
   const phone = window.matchMedia('(max-width: 560px)');
   const placeRating = () => {
-    if (phone.matches) bubbles.insertBefore(rating, miniPull);
+    if (phone.matches) bubbles.insertBefore(rating, controls);
     else meterSlot.appendChild(rating);
   };
   placeRating();
@@ -424,7 +419,7 @@ export function mountDadOMatic(element, backend) {
     if (busy) return;
     busy = true;
     machineError.textContent = '';
-    lever.disabled = pull.disabled = miniPull.disabled = true;
+    lever.disabled = pull.disabled = true;
     levelButtons.forEach((b) => {
       b.disabled = true;
       b.classList.remove('chosen');
@@ -449,7 +444,7 @@ export function mountDadOMatic(element, backend) {
         root.classList.remove('is-thinking');
         setupText.textContent = randomDadLine();
         verdict.textContent = 'Pull the lever to try again.';
-        lever.disabled = pull.disabled = miniPull.disabled = false;
+        lever.disabled = pull.disabled = false;
         busy = false;
         return;
       }
@@ -494,7 +489,7 @@ export function mountDadOMatic(element, backend) {
       : 'How bad was it? Be honest. Dad can take it.';
 
     levelButtons.forEach((b) => (b.disabled = false));
-    lever.disabled = pull.disabled = miniPull.disabled = false;
+    lever.disabled = pull.disabled = false;
     busy = false;
     refresh();
   }
@@ -514,12 +509,17 @@ export function mountDadOMatic(element, backend) {
     if (level.score >= 4) confetti(root, [level.emoji, '🏆', '⭐', '👏'], 30);
     try {
       const id = joke.id ?? (await joke.saving);
-      if (!id) return;
+      if (!id) throw new Error('the joke was not filed');
       await backend.rateJoke(id, level);
       verdict.textContent += `  (+${level.score * 10} Dad Points, filed in ${backend.place})`;
       refresh();
     } catch (e) {
       machineError.textContent = `The Groan-o-Meter jammed: ${e.message}`;
+    }
+    // On phones the rating pushes the pull button below the screen: once the verdict has its
+    // final length, bring the button back into view for the next joke.
+    if (window.matchMedia('(max-width: 560px)').matches) {
+      pull.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
