@@ -196,7 +196,6 @@ export function mountDadOMatic(element, backend) {
       bulbStrip('top'),
       bulbStrip('bottom'),
       el('h1', { class: 'djg-title', text: 'DAD-O-MATIC 3000' }),
-      el('p', { class: 'djg-sub', text: 'Industrial-grade puns. Rated by the Groan-o-Meter™.' }),
       el(
         'div',
         { class: 'djg-stats' },
