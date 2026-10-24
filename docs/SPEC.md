@@ -144,8 +144,8 @@ transaction; `rated` is unchanged.
 A Dad | Mom toggle in the banner (public site only, `moms: true`). The choice is kept in
 `localStorage` (`djg-persona`); `?mode=mom` or `?mode=dad` in the link overrides it. Mom has:
 
-- her own look: `packages/ui/src/mom.js` (a drawn stand-in with Dad's five frames until her
-  puppet photos are cut out like his) and a pink/lavender theme (`.djg.is-mom`);
+- her own look: `packages/ui/src/mom.js`, five puppet photos cut out like Dad's
+  (`scripts/cutout.py --mom`), and a pink/lavender theme (`.djg.is-mom`);
 - her own words: "MOM-O-MATIC 3000", `MOM_LINES`, each level's `momQuip`, "Mom Points";
 - her own jokes: the API takes `persona` (`dad` default, anything else is Dad) and the model gets
   `jokeSystem('mom')`, mom jokes in a mom's voice, never "yo mama";

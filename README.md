@@ -93,4 +93,5 @@ light background. Then:
 ```sh
 pip install numpy pillow scipy
 python3 scripts/cutout.py rest.jpg talk.jpg grin.jpg blink.jpg sad.jpg   # writes packages/ui/assets/*.webp
+python3 scripts/cutout.py --mom rest.jpg talk.jpg grin.jpg blink.jpg sad.jpg   # Mom: mom-*.webp
 ```
