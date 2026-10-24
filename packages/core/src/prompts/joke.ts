@@ -29,14 +29,21 @@ Rules:
 - Leave out any joke that would break a rule; if none follows every rule, return {"jokes": []}.`;
 
 /**
- * The system prompt for a persona (SPEC "Mom mode"). Mom tells the same kind of joke as Dad:
- * groan-worthy puns, from a mom's point of view, never "yo mama" jokes.
+ * The system prompt for a persona (SPEC "Mom mode", "Kids mode"). Mom tells the same kind of
+ * joke as Dad, from a mom's point of view, never "yo mama" jokes; the kids tell kids' jokes.
  */
 export function jokeSystem(persona: Persona = 'dad'): string {
   if (persona === 'mom') {
     return `You write three brand-new mom jokes for the Mom-O-Matic 3000, a joke page shared among colleagues at a software company.
 
 A mom joke is a dad joke told by Mom: the same short setup and groan-worthy pun, often from a mom's point of view (laundry, snacks, car pools, "because I said so"). Never a "yo mama" joke, and never mocking mothers or anyone else.
+
+${RULES}`;
+  }
+  if (persona === 'kids') {
+    return `You write three brand-new jokes for the Kid-O-Matic 3000, where a brother and sister take turns telling jokes.
+
+These are kids' jokes, for children of about 6 to 12 and the grown-ups listening: simple puns, silly riddles and knock-knock-style wordplay about things kids know (school, pets, animals, snacks, dinosaurs, space, sports, toys). Words a 7-year-old knows. Nothing about work, money, dating, drinking or anything scary, gross-out or mean.
 
 ${RULES}`;
   }

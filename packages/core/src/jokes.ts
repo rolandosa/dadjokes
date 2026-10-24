@@ -222,6 +222,8 @@ export interface GroanLevel {
   quip: string;
   /** The same reaction from Mom (Mom mode). */
   momQuip: string;
+  /** And from the kids (Kids mode). */
+  kidsQuip: string;
 }
 
 export const GROAN_LEVELS: readonly GroanLevel[] = [
@@ -232,6 +234,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     emoji: '😐',
     quip: 'Dad is concerned. Dad is going to try harder.',
     momQuip: 'Mom is not mad, just disappointed. She will try harder.',
+    kidsQuip: 'Aww. The kids are huddling to think of a better one.',
   },
   {
     score: 2,
@@ -240,6 +243,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     emoji: '🙄',
     quip: 'An eye roll! The dad engine is warming up.',
     momQuip: 'Did you just roll your eyes at your mother? Progress.',
+    kidsQuip: 'An eye roll! The kids say that means you secretly liked it.',
   },
   {
     score: 3,
@@ -248,6 +252,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     emoji: '😩',
     quip: 'A real groan. Dad does a small victory lap around the grill.',
     momQuip: 'A real groan. Mom adds it to the family group chat.',
+    kidsQuip: 'A real groan! The kids high-five behind your back.',
   },
   {
     score: 4,
@@ -256,6 +261,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     emoji: '🤦',
     quip: 'FACEPALM! Dad updates his LinkedIn: "Professional Punsmith".',
     momQuip: 'FACEPALM! Mom is telling this one at every family dinner now.',
+    kidsQuip: 'FACEPALM! The kids are telling this one at school tomorrow.',
   },
   {
     score: 5,
@@ -264,6 +270,7 @@ export const GROAN_LEVELS: readonly GroanLevel[] = [
     emoji: '🚪',
     quip: 'You physically left. This is the highest honour a dad can receive.',
     momQuip: 'You left the room. Mom will be here when you get back. With another one.',
+    kidsQuip: 'You left the room! The kids are following you with another one.',
   },
 ];
 
@@ -292,3 +299,15 @@ export const MOM_LINES = [
 ];
 
 export const randomMomLine = (): string => MOM_LINES[Math.floor(Math.random() * MOM_LINES.length)]!;
+
+/** The kids' idle lines (Kids mode). */
+export const KID_LINES = [
+  'Knock knock! Wait, pull the lever first.',
+  'Are we there yet?',
+  'Can we have a snack after this joke?',
+  "I'm not tired! One more joke!",
+  'She started it. No, he started it!',
+  'Five more minutes of jokes, please?',
+];
+
+export const randomKidLine = (): string => KID_LINES[Math.floor(Math.random() * KID_LINES.length)]!;

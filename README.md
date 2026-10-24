@@ -37,8 +37,9 @@ from Vault on 2026-10-24 and is kept as code only: do not deploy it without the 
   Higher is better: the groan is the point. Changed your mind? Tap another level.
 
 - **Hall of Groans** (top-rated) and **Fresh Off the Grill** (latest), shared by everyone.
-- **Mom mode.** A Dad | Mom toggle in the banner (or `?mode=mom`): Mom tells mom jokes, in her
-  own colours, with her own Hall of Groans and stats. She never repeats a joke Dad told.
+- **Mom and Kids modes.** A Dad | Mom | Kids toggle in the banner (or `?mode=mom`,
+  `?mode=kids`): Mom tells mom jokes, and a boy and a girl tell kids' jokes, each in their own
+  colours with their own Hall of Groans and stats. Nobody repeats a joke another one told.
 
 ## Layout
 

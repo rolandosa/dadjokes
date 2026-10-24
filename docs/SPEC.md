@@ -39,7 +39,7 @@ A joke row holds `id, key` (`<category>:<n>` library, `ai`, or `ext:<source>:<id
 and `reusedFrom` (the original's id) when it is an encore.
 An unrated row has no `level`/`score` attributes (not NULLs); a first rating is conditional on
 `score` being absent, so `rated` counts each joke once. Mom's jokes use `MOM#FEED`, `MOM#TOP`
-and `STATS`/`MOM` in place of `FEED`, `TOP` and `STATS`/`STATS` (see "Mom mode"); `SEEN`, `EXT#`
+and `STATS`/`MOM` (the kids' `KIDS#…` and `STATS`/`KIDS`) in place of `FEED`, `TOP` and `STATS`/`STATS` (see "Mom mode"); `SEEN`, `EXT#`
 claims and the `AI#` day counts are shared.
 
 ## Service
@@ -141,8 +141,9 @@ transaction; `rated` is unchanged.
 
 ## Mom mode
 
-A Dad | Mom toggle in the banner (public site only, `moms: true`). The choice is kept in
-`localStorage` (`djg-persona`); `?mode=mom` or `?mode=dad` in the link overrides it. Mom has:
+A Dad | Mom | Kids toggle in the banner (public site only, `moms: true`). The choice is kept in
+`localStorage` (`djg-persona`); `?mode=dad`, `?mode=mom` or `?mode=kids` in the link overrides
+it. Mom has:
 
 - her own look: `packages/ui/src/mom.js`, five puppet photos cut out like Dad's
   (`scripts/cutout.py --mom`), and a pink/lavender theme (`.djg.is-mom`);
@@ -154,6 +155,19 @@ A Dad | Mom toggle in the banner (public site only, `moms: true`). The choice is
 The no-repeat fingerprints are shared, so Mom never tells a joke Dad already told. Switching
 drops the joke on stage and loads the other board; a reply that arrives for the one you left is
 ignored.
+
+## Kids mode
+
+The third persona, `kids`, works like Mom mode: a boy and a girl side by side tell the jokes.
+They have `packages/ui/src/kids.js` (drawn stand-ins, both kids in each of the five frames,
+until their puppet photos arrive), a blue playground theme (`.djg.is-kids`), "KID-O-MATIC
+3000", `KID_LINES`, each level's `kidsQuip` and "Kid Points". The model gets `jokeSystem('kids')`:
+jokes for children of about 6 to 12, in words a 7-year-old knows, nothing about work, money,
+dating or drinking, nothing scary, gross-out or mean. Their data is in `KIDS#FEED`, `KIDS#TOP`
+and `STATS`/`KIDS`; fingerprints are shared with Dad and Mom.
+
+Switching persona also drops the space held under the controls for the last joke (see "Web"),
+so no blank gap is left when you switch while a joke is loading.
 
 ## API
 

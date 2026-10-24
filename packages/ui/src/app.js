@@ -4,17 +4,25 @@ import {
   generateJoke,
   levelByKey,
   randomDadLine,
+  randomKidLine,
   randomMomLine,
 } from '@dadjokes/core/jokes';
 // `?inline`: the CSS as a string (Vite); the Vault build's esbuild plugin strips the query.
 import css from './styles.css?inline';
 import { createDad } from './dad.js';
 import { createMom } from './mom.js';
+import { createKids } from './kids.js';
 
-// What changes between Dad and Mom (SPEC "Mom mode"); the machine is the same.
+// What changes between Dad, Mom and the kids (SPEC "Mom mode", "Kids mode"); the machine is the
+// same. `who` is the subject ("Dad is", "The kids are"), `them` the object ("ask the kids").
 const PERSONAS = {
   dad: {
+    label: '👨 Dad',
     who: 'Dad',
+    them: 'Dad',
+    is: 'is',
+    whose: "Dad's",
+    points: 'Dad Points',
     title: 'DAD-O-MATIC 3000',
     floaters: ['👔', '🧦', '🩴', '🍖', '🔧', '📺', '🧢', '☕', '🪓', '🌭', '⛳', '🔦'],
     confetti: '🧔',
@@ -23,7 +31,12 @@ const PERSONAS = {
     create: createDad,
   },
   mom: {
+    label: '👩 Mom',
     who: 'Mom',
+    them: 'Mom',
+    is: 'is',
+    whose: "Mom's",
+    points: 'Mom Points',
     title: 'MOM-O-MATIC 3000',
     floaters: ['👛', '🧁', '📱', '🧺', '☕', '🌷', '🧶', '🍪', '📞', '🛒', '🍷', '💐'],
     confetti: '👩',
@@ -31,15 +44,30 @@ const PERSONAS = {
     quip: (l) => l.momQuip,
     create: createMom,
   },
+  kids: {
+    label: '🧒 Kids',
+    who: 'The kids',
+    them: 'the kids',
+    is: 'are',
+    whose: "The kids'",
+    points: 'Kid Points',
+    title: 'KID-O-MATIC 3000',
+    floaters: ['🧸', '🎈', '🍭', '🦖', '🛹', '🧃', '🎮', '🪁', '🖍️', '🍕', '⚽', '🚀'],
+    confetti: '🧒',
+    line: randomKidLine,
+    quip: (l) => l.kidsQuip,
+    create: createKids,
+  },
 };
 const MODE_KEY = 'djg-persona';
 
-/** `?mode=mom` in the link wins, then the visitor's last choice, then Dad. */
+/** `?mode=mom` (or `kids`) in the link wins, then the visitor's last choice, then Dad. */
 function startingPersona() {
   try {
     const asked = new URLSearchParams(window.location.search).get('mode');
-    if (asked === 'mom' || asked === 'dad') return asked;
-    return window.localStorage.getItem(MODE_KEY) === 'mom' ? 'mom' : 'dad';
+    if (asked in PERSONAS) return asked;
+    const kept = window.localStorage.getItem(MODE_KEY);
+    return kept in PERSONAS ? kept : 'dad';
   } catch {
     return 'dad';
   }
@@ -186,7 +214,8 @@ function fullscreenToggle(root) {
  *   place: where jokes are filed ("Vault", "the cloud"), tagline: the line under the lever,
  *   fullscreen: true to offer a Fullscreen button (the Vault page; the public site has none),
  *   categories: the category keys to offer (default: all),
- *   moms: true to offer the Dad | Mom toggle (the public site; persona is 'dad' or 'mom').
+ *   moms: true to offer the Dad | Mom | Kids toggle (the public site; persona is 'dad', 'mom'
+ *   or 'kids').
  * Board rows are { setup, punchline, category, level } (core/types ToldJoke).
  */
 export function mountDadOMatic(element, backend) {
@@ -199,7 +228,7 @@ export function mountDadOMatic(element, backend) {
   const P = () => PERSONAS[persona];
 
   element.replaceChildren();
-  const root = el('div', { class: `djg${persona === 'mom' ? ' is-mom' : ''}` });
+  const root = el('div', { class: `djg is-${persona}` });
   root.appendChild(el('style', { text: css }));
   element.appendChild(root);
 
@@ -223,12 +252,13 @@ export function mountDadOMatic(element, backend) {
   if (backend.fullscreen) wrap.appendChild(fullscreenToggle(root));
 
   const title = el('h1', { class: 'djg-title', text: P().title });
-  const modeButtons = ['dad', 'mom'].map((key) =>
+  const modeButtons = Object.keys(PERSONAS).map((key) =>
     el('button', {
       class: 'djg-mode',
       type: 'button',
+      'data-persona': key,
       'aria-pressed': String(key === persona),
-      text: key === 'dad' ? '👨 Dad' : '👩 Mom',
+      text: PERSONAS[key].label,
       onclick: () => switchTo(key),
     }),
   );
@@ -385,7 +415,7 @@ export function mountDadOMatic(element, backend) {
   const needle = gaugeHolder.querySelector('.djg-needle');
   const verdict = el('div', {
     class: 'djg-verdict',
-    text: `Pull the lever, then tell ${P().who} how much it hurt.`,
+    text: `Pull the lever, then tell ${P().them} how much it hurt.`,
   });
   const levelButtons = GROAN_LEVELS.map((l) =>
     el(
@@ -507,7 +537,7 @@ export function mountDadOMatic(element, backend) {
 
   let cancelReveal = null; // ends the wait for "Hit me with it!" when the visitor switches
 
-  /** Dad <-> Mom: new look, new words, her own jokes and Hall of Groans. */
+  /** Dad, Mom or the kids: new look, new words, their own jokes and Hall of Groans. */
   function switchTo(next) {
     if (next === persona) return;
     persona = next;
@@ -517,10 +547,8 @@ export function mountDadOMatic(element, backend) {
     } catch {
       // private mode: the choice lasts for this visit only
     }
-    modeButtons.forEach((b, i) =>
-      b.setAttribute('aria-pressed', String(i === (next === 'dad' ? 0 : 1))),
-    );
-    root.classList.toggle('is-mom', next === 'mom');
+    modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.persona === next)));
+    Object.keys(PERSONAS).forEach((k) => root.classList.toggle(`is-${k}`, k === next));
     title.textContent = P().title;
     const fresh = P().create();
     dadHolder.replaceWith(fresh);
@@ -542,8 +570,11 @@ export function mountDadOMatic(element, backend) {
       b.disabled = true;
       b.classList.remove('chosen');
     });
-    verdict.textContent = `Pull the lever, then tell ${P().who} how much it hurt.`;
+    verdict.textContent = `Pull the lever, then tell ${P().them} how much it hurt.`;
     machineError.textContent = '';
+    // The space held for the last punchline and rating belongs to the joke just dropped.
+    anchorTop = 0;
+    holdControls();
     lever.disabled = pull.disabled = false;
     setNeedle(0.5);
     statTold.textContent = statRated.textContent = statAvg.textContent = '–';
@@ -554,7 +585,7 @@ export function mountDadOMatic(element, backend) {
     if (busy) return;
     busy = true;
     const my = gen;
-    const who = P().who;
+    const { who, them, is, whose } = P();
     anchorTop = pageTop(controls);
     // Pulled from further down the page: bring Dad's bubble back into view to read the setup.
     if (bubble.getBoundingClientRect().top < 0) {
@@ -571,7 +602,7 @@ export function mountDadOMatic(element, backend) {
     root.classList.remove('is-punchline', 'has-punchline', 'is-sad');
     punch.classList.remove('show');
     badum.classList.remove('show');
-    verdict.textContent = `${who} is loading a pun...`;
+    verdict.textContent = `${who} ${is} loading a pun...`;
     setNeedle(0.5);
 
     root.classList.add('is-thinking');
@@ -583,7 +614,7 @@ export function mountDadOMatic(element, backend) {
         joke = await backend.nextJoke(category, persona);
       } catch (e) {
         if (my !== gen) return;
-        machineError.textContent = `${who}'s joke engine stalled: ${e.message}`;
+        machineError.textContent = `${whose} joke engine stalled: ${e.message}`;
         root.classList.remove('is-thinking');
         setupText.textContent = P().line();
         verdict.textContent = 'Pull the lever to try again.';
@@ -612,7 +643,7 @@ export function mountDadOMatic(element, backend) {
     root.classList.remove('is-thinking');
 
     // Dad waits for the audience to ask for it.
-    verdict.textContent = `Go on, ask ${who} for the punchline...`;
+    verdict.textContent = `Go on, ask ${them} for the punchline...`;
     reveal.hidden = false;
     reveal.focus({ preventScroll: true });
     await new Promise((resolve) => {
@@ -663,7 +694,7 @@ export function mountDadOMatic(element, backend) {
       if (!id) throw new Error('the joke was not filed');
       await backend.rateJoke(id, level, joke.persona ?? 'dad');
       if (joke !== current || joke.level !== level.key) return; // switched, or tapped again
-      const points = `${level.score * 10} ${P().who} Points`;
+      const points = `${level.score * 10} ${P().points}`;
       verdict.textContent += changing
         ? `  (Rating changed: ${points}.)`
         : `  (+${points}, filed in ${backend.place}. Tap another to change it.)`;

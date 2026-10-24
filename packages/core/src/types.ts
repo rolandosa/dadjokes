@@ -1,9 +1,10 @@
 import type { CategoryKey, GroanKey } from './jokes.js';
 
-/** Who tells the jokes: Dad, or Mom in Mom mode (SPEC "Mom mode"). */
-export type Persona = 'dad' | 'mom';
-export const PERSONAS: readonly Persona[] = ['dad', 'mom'];
-export const isPersona = (v: unknown): v is Persona => v === 'dad' || v === 'mom';
+/** Who tells the jokes: Dad, Mom (SPEC "Mom mode") or the kids (SPEC "Kids mode"). */
+export type Persona = 'dad' | 'mom' | 'kids';
+export const PERSONAS: readonly Persona[] = ['dad', 'mom', 'kids'];
+export const isPersona = (v: unknown): v is Persona =>
+  typeof v === 'string' && (PERSONAS as readonly string[]).includes(v);
 
 /** A joke as it was told and (maybe) rated. `level` and `score` are null until someone rates it. */
 export interface ToldJoke {

@@ -1040,3 +1040,18 @@
   opacity: 0.7;
   margin-bottom: 4px;
 }
+
+/* Kids mode: the same machine in playground colours. */
+.djg.is-kids {
+  --cherry: #1971c2;
+  --tang: #f76707;
+  --sky: #12b886;
+  --mint: #74c0fc;
+  --cream: #f1f8ff;
+  background: linear-gradient(135deg, #a5d8ff, #b2f2bb, #ffec99, #ffd8a8, #d0bfff, #99e9f2);
+  background-size: 400% 400%;
+}
+.djg.is-kids .djg-bulbs i {
+  background: #fff9db;
+  box-shadow: 0 0 8px #ffe066;
+}

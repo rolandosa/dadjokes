@@ -7,8 +7,9 @@ import type { Persona } from '@dadjokes/core/types';
  * - FEED / J#<id>: every told joke; ids are ULIDs, so the newest sort last.
  * - TOP / <score>#<id>: a copy of each rated joke, sorted by score then age.
  * - STATS / STATS: running counts for the header.
- *   Mom mode has her own three: MOM#FEED, MOM#TOP and STATS / MOM (see `partitions`).
- *   EXT, SEEN and the AI# counter are shared, so neither persona repeats the other.
+ *   Mom and the kids have their own three: MOM#FEED, MOM#TOP, STATS / MOM and KIDS#FEED,
+ *   KIDS#TOP, STATS / KIDS (see `partitions`). EXT, SEEN and the AI# counter are shared, so no
+ *   persona repeats another.
  * - STATS / AI#<YYYY-MM-DD>: model calls that day, for the daily cap.
  * - EXT / <key>: an external joke already told, so it is not told again.
  * - SEEN / <fingerprint>: a setup or punchline already told (core/src/fingerprint.ts).
@@ -21,9 +22,9 @@ export const SEEN = 'SEEN';
 
 /** The persona's own partitions; Dad keeps the original names, so his data never moved. */
 export function partitions(persona: Persona): { feed: string; top: string; statsSk: string } {
-  return persona === 'mom'
-    ? { feed: 'MOM#FEED', top: 'MOM#TOP', statsSk: 'MOM' }
-    : { feed: FEED, top: TOP, statsSk: STATS };
+  if (persona === 'mom') return { feed: 'MOM#FEED', top: 'MOM#TOP', statsSk: 'MOM' };
+  if (persona === 'kids') return { feed: 'KIDS#FEED', top: 'KIDS#TOP', statsSk: 'KIDS' };
+  return { feed: FEED, top: TOP, statsSk: STATS };
 }
 
 function checkId(id: string): string {

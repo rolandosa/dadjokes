@@ -95,3 +95,22 @@ describe('Mom mode', () => {
     expect(systems[0]).toMatch(/Dad-O-Matic/);
   });
 });
+
+describe('Kids mode', () => {
+  it("writes with the kids' prompt, on their own board", async () => {
+    const kids = await call('POST', '/api/jokes', { category: 'animals', persona: 'kids' });
+    expect(kids.status).toBe(201);
+    expect(systems[0]).toMatch(/Kid-O-Matic 3000, where a brother and sister/);
+    await call('POST', '/api/jokes', { category: 'animals', persona: 'mom' });
+    const rated = await call('POST', `/api/jokes/${kids.body!.id}/rating`, {
+      level: 'eye_roll',
+      persona: 'kids',
+    });
+    expect(rated.status).toBe(204);
+    const board = await call('GET', '/api/board', undefined, 'persona=kids');
+    expect((board.body!.recent as Array<{ id: string }>).map((j) => j.id)).toEqual([kids.body!.id]);
+    expect(board.body!.stats).toEqual({ told: 1, rated: 1, avg: 2 });
+    const dad = await call('GET', '/api/board');
+    expect((dad.body!.stats as { told: number }).told).toBe(0);
+  });
+});
