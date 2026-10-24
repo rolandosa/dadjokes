@@ -22,7 +22,8 @@
     "qr": "tsx scripts/qr.ts",
     "vault:build": "pnpm --filter @dadjokes/vault run package",
     "vault:deploy": "./scripts/vault-deploy.sh",
-    "prod:dedupe": "tsx scripts/dedupe-jokes.ts"
+    "prod:dedupe": "tsx scripts/dedupe-jokes.ts",
+    "prod:reverse-ratings": "tsx scripts/reverse-ratings.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "3.1137.0",
